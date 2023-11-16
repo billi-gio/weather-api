@@ -18,21 +18,20 @@ venv/
 # Env vars
 .env
 
+# Log files
+*.log
+
 # pickled objects
 *.pkl
 
 # helm chart dependencies
 charts/service/charts/
 
-
 .pytest_cache/
 *.py{cdo}
 .coverage
 .coverage_report/
 
-/.blackbox/pubring.gpg~
-/.blackbox/pubring.kbx~
-/.blackbox/secring.gpg
 readme.local
 
 # Created by https://www.gitignore.io/api/python
@@ -140,3 +139,16 @@ dmypy.json
 
 # local config
 config.local.yml
+
+# Applications
+*.app
+*.exe
+*.war
+
+# Large media files
+*.mp4
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
