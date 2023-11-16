@@ -21,7 +21,7 @@ pipelines:
           script:
             - pip install poetry
             - poetry config virtualenvs.in-project true
-            - poetry install && poetry shell
+            - poetry install
             - make style
       - step:
           name: Test
@@ -29,5 +29,5 @@ pipelines:
             - pip
             - venv
           script:
-            - poetry shell
+            - poetry install
             - make test
