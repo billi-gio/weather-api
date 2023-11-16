@@ -20,6 +20,7 @@ pipelines:
             - venv
           script:
             - pip install poetry
+            - poetry config virtualenvs.in-project true
             - poetry install && poetry shell
             - make style
       - step:
