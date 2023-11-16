@@ -1,0 +1,32 @@
+#  Template python-build
+
+#  This template allows you to validate your python code.
+#  The workflow allows running tests and code linting on the default branch.
+
+image: python:3.11
+
+definitions:
+  caches:
+    pip: ~/.cache/pip
+    venv: .venv # or ~/.local/share/virtualenvs/ or ~/.virtualenvs/
+
+pipelines:
+  default:
+    - parallel:
+      - step:
+          name: Lint code
+          caches:
+            - pip
+            - venv
+          script:
+            - pip install poetry
+            - poetry install && poetry shell
+            - make style
+      - step:
+          name: Test
+          caches:
+            - pip
+            - venv
+          script:
+            - poetry shell
+            - make test

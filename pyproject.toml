@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "weather-api"
+version = "0.1.0"
+description = "Web API for weather forecast"
+authors = []
+
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "*"
+gunicorn = "*"
+requests = "*"
+uvicorn = "*"
+alembic = "*"
+loguru = "*"
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
+isort = "*"
+SQLAlchemy = {extras = ["mypy"], version = "^1.4.46"}
+httpx = "*"
+pytest = "*"
+pytest-asyncio = "*"
+pytest-cov = "*"
+pytest-mock = "*"
+pylint = "*"
+responses = "*"
+
+[build-system]
+requires = ["poetry-core>=1.2.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = [
+    "--strict-markers",
+    "--verbose",
+    "--cov=weather_api",
+    "--cov-branch",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-fail-under=85",
+#    "--postgres-standard=weather_api",
+#    "--postgres-run-migrations",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "@abc.abstractmethod",
+    "raise NotImplementedError",
+]
+
+[tool.lint]
+typecheck_plugins = [
+    "sqlalchemy.ext.mypy.plugin",
+]
