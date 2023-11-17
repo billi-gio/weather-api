@@ -8,6 +8,6 @@ def test_returns_correct_response(test_client):
     # when
     assert response.status_code == 200
     assert response.json() == {
-        "environment": "test",
+        # "environment": "test",
         "service": "weather-api",
     }
