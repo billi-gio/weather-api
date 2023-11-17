@@ -30,6 +30,8 @@ pipelines:
             - pip
             - venv
           script:
+            - pip install poetry
+            - poetry config virtualenvs.in-project true
             - poetry install --with dev
             - source .venv/bin/activate
             - make test
