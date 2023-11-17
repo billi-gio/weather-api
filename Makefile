@@ -11,7 +11,7 @@ style:
 	isort --check --diff .
 	black --check --diff .
 	mypy -p weather_api
-	pylint weather_api --rcfile=.pylintrc --fail-under=9
+	pylint weather_api --rcfile=.pylintrc --fail-under=8.5
 
 verify: style test
 

@@ -1,5 +1,5 @@
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from weather_api.app import create_app
 
