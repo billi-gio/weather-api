@@ -1,29 +1,43 @@
-# README #
+# weather-api
+Get weather forecast and save results to the database
 
-This README would normally document whatever steps are necessary to get your application up and running.
+## Requirements
+You should have a development environment set up with:
 
-### What is this repository for? ###
+* poetry
+* python3.11
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+## Install
+```bash
+poetry env use 3.11                                   # only if you want to use a specific version
+poetry install
+```
 
-### How do I get set up? ###
+Don't forget check into repo the `poetry.lock` file.
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+## Testing
+Sets of test are defined:
 
-### Contribution guidelines ###
+- `tests/unit` unit tests
+- `tests/functional` functional tests (with dependencies on things like db, etc.)
 
-* Writing tests
-* Code review
-* Other guidelines
+## Convenience scripts
+The Makefile in this project contains convenience scripts to help your day-to-day coding. See below:
 
-### Who do I talk to? ###
+Start the app:
+```bash
+make start
+```
+or
+```bash
+python weather_api/app.py
+```
 
-* Repo owner or admin
-* Other community or team contact
+```bash
+make fmt verify
+```
+
+Run tests:
+```bash
+make tests
+```
