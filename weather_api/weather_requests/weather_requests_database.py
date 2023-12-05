@@ -1,9 +1,14 @@
 """DB Tables for weather data from api requests."""
-from typing import ClassVar, Never, NoReturn
+from typing import ClassVar, Never
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
-from sqlalchemy.ext.declarative import as_declarative
-from sqlalchemy.orm import Mapped, backref, mapped_column, relationship
+from sqlalchemy.orm import (  # type: ignore
+    Mapped,
+    as_declarative,
+    backref,
+    mapped_column,
+    relationship,
+)
 from sqlalchemy.orm.properties import RelationshipProperty
 
 

@@ -6,7 +6,7 @@ import os
 import textwrap
 
 from requests import HTTPError
-import pycountry
+import pycountry  # type: ignore
 import requests
 
 from weather_api.weather_requests.add_new_request_to_db import add_entry

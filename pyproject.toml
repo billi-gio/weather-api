@@ -14,11 +14,12 @@ uvicorn = "*"
 alembic = "*"
 loguru = "*"
 pycountry = "^22.3.5"
+sqlalchemy-stubs = "^0.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
 isort = "*"
-SQLAlchemy = {extras = ["mypy"], version = "^1.4.46"}
+SQLAlchemy = {extras = ["mypy"], version = "^2.0.23"}
 httpx = "*"
 pytest = "*"
 pytest-asyncio = "*"
