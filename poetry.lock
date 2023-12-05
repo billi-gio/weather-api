@@ -1252,6 +1252,20 @@ files = [
 ]
 
 [[package]]
+name = "types-requests"
+version = "2.31.0.10"
+description = "Typing stubs for requests"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "types-requests-2.31.0.10.tar.gz", hash = "sha256:dc5852a76f1eaf60eafa81a2e50aefa3d1f015c34cf0cba130930866b1b22a92"},
+    {file = "types_requests-2.31.0.10-py3-none-any.whl", hash = "sha256:b32b9a86beffa876c0c3ac99a4cd3b8b51e973fb8e3bd4e0a6bb32c7efad80fc"},
+]
+
+[package.dependencies]
+urllib3 = ">=2"
+
+[[package]]
 name = "typing-extensions"
 version = "4.8.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -1313,4 +1327,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "847270bbe41d56ce5de6496d59e3c6e245f0ecd46c3b962d1cad7a31ad9d2fb2"
+content-hash = "11729899d2fdfb87315568dae316cedecf468009b2b28fe67e65fedfa206ad22"

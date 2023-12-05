@@ -15,6 +15,7 @@ alembic = "*"
 loguru = "*"
 pycountry = "^22.3.5"
 sqlalchemy-stubs = "^0.4"
+types-requests = "^2.31.0.10"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
