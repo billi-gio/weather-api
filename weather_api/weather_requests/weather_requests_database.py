@@ -3,8 +3,8 @@ from typing import ClassVar, Never
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import (  # type: ignore
+    DeclarativeBase,
     Mapped,
-    as_declarative,
     backref,
     mapped_column,
     relationship,
@@ -12,8 +12,7 @@ from sqlalchemy.orm import (  # type: ignore
 from sqlalchemy.orm.properties import RelationshipProperty
 
 
-@as_declarative()
-class Table:
+class Table(DeclarativeBase):
     pass
 
 
@@ -40,4 +39,18 @@ class WeatherRequest(Table):
     city_id: Mapped[int] = mapped_column(ForeignKey("cities.id", ondelete="CASCADE"))
     city: ClassVar[RelationshipProperty[Never]] = relationship(
         "City", backref=backref("weather_conditions")
+    )
+
+
+class WeatherForecast(Table):
+    """Table to store weather forecast requests."""
+
+    __tablename__ = "weather_forecast"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    weather_conditions: Mapped[str] = mapped_column(String(250), nullable=False)
+    temperature: Mapped[float] = mapped_column(nullable=False)
+    city_id: Mapped[int] = mapped_column(ForeignKey("cities.id", ondelete="CASCADE"))
+    city: ClassVar[RelationshipProperty[Never]] = relationship(
+        "City", backref=backref("weather_forecast")
     )

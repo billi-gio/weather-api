@@ -1,15 +1,22 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy.orm import Session
 
-from weather_api.weather_requests.weather_db_engine import engine
-from weather_api.weather_requests.weather_requests_database import City, WeatherRequest
+from weather_api.weather_requests.weather_requests_database import (
+    City,
+    WeatherForecast,
+    WeatherRequest,
+)
+
+if TYPE_CHECKING:
+    from weather_api.weather_requests.weatherclient import DayForecast
 
 
-def add_entry(request):
-    session = Session(bind=engine)
-
-    entry = (
+def add_weather_request_entry_to_db(request: "DayForecast", session: Session) -> None:
+    """Take the api result for the weather at the moment and a db session and add the entry to the database."""
+    city_entry = (
         session.query(City)
-        .filter(request.city == City.city_name, request.country == City.country)
+        .filter(City.city_name == request.city, City.country == request.country)
         .one_or_none()
     )
     weather = WeatherRequest(
@@ -18,18 +25,41 @@ def add_entry(request):
         temperature=request.temperature,
     )
 
-    if entry is None:
+    if city_entry is None:
         city_entry = City(
             country=request.country,
             city_name=request.city,
         )
         session.add(city_entry)
 
-        weather.city = city_entry
-
-    else:
-        weather.city_id = entry.id
+    weather.city = city_entry  # type: ignore
 
     session.add(weather)
+
+    session.commit()
+
+
+def add_forecast_entry(forecast: list["DayForecast"], session: Session) -> None:
+    """Take the 14 days forecast api result and a db session and add the entry to the database."""
+    for day in forecast:
+        city_entry = (
+            session.query(City)
+            .filter(day.city == City.city_name, day.country == City.country)
+            .one_or_none()
+        )
+        weather_forecast = WeatherForecast(
+            weather_forecast=forecast,
+        )
+
+        if city_entry is None:
+            city_entry = City(
+                country=day.country,
+                city_name=day.city,
+            )
+            session.add(city_entry)
+
+        weather_forecast.city = city_entry  # type: ignore
+
+        session.add(weather_forecast)
 
     session.commit()
