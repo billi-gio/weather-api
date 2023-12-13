@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -14,4 +14,4 @@ class WeatherRequestSchema(BaseModel):
 
 
 class WeatherForecast(BaseModel):
-    forecast: list["DayForecast"]
+    forecast: Optional[List]

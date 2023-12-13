@@ -27,6 +27,22 @@ def get_db() -> Generator:
         db.close()
 
 
+def get_weather_now_client(
+    config: ApplicationConfig = Depends(load_application_config),
+) -> weatherclient.OneDayForecastClient:
+    configuration = weatherclient.ForecastClientConfig(config.api_key)
+    client = weatherclient.OneDayForecastClient(configuration)
+    return client
+
+
+def get_forecast_client(
+    config: ApplicationConfig = Depends(load_application_config),
+) -> weatherclient.LongTermForecastClient:
+    configuration = weatherclient.ForecastClientConfig(config.api_key)
+    client = weatherclient.LongTermForecastClient(configuration)
+    return client
+
+
 @weather_router.get(
     "/weather-now/{city_name}",
     response_model=WeatherRequestSchema,
@@ -36,15 +52,14 @@ def get_db() -> Generator:
 async def weather(
     city_name: str,
     verbosity: Optional[weatherclient.ForecastVerbosity] = None,
-    config: ApplicationConfig = Depends(load_application_config),
     db: Session = Depends(get_db),
+    client: weatherclient.OneDayForecastClient = Depends(get_weather_now_client),
 ) -> dict[str, str | float | datetime | None]:
-    configuration = weatherclient.ForecastClientConfig(config.api_key)
-    client = weatherclient.OneDayForecastClient(configuration)
     try:
         request = client.get_weather_forecast(city_name, verbosity)
     except HTTPError:
         raise HTTPException(status_code=404, detail="Check city name or api key")
+    print(request)
     add_weather_request_entry_to_db(request, db)
 
     return {
@@ -65,17 +80,14 @@ async def weather_forecast(
     city_name: str,
     days: Optional[int] = None,
     verbosity: Optional[weatherclient.ForecastVerbosity] = None,
-    config: ApplicationConfig = Depends(load_application_config),
     db: Session = Depends(get_db),
+    client: weatherclient.LongTermForecastClient = Depends(get_forecast_client),
 ) -> dict[str, list[DayForecast]]:
-    configuration = weatherclient.ForecastClientConfig(config.api_key)
-    client = weatherclient.LongTermForecastClient(configuration)
     try:
         weather = client.get_weather_forecast(city_name, verbosity, days)
     except HTTPError:
         raise HTTPException(status_code=404, detail="Check city name or api key")
     add_forecast_entry(weather, db)
-
     return {
         "forecast": weather,
     }

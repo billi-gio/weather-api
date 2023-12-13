@@ -44,11 +44,13 @@ def add_forecast_entry(forecast: list["DayForecast"], session: Session) -> None:
     for day in forecast:
         city_entry = (
             session.query(City)
-            .filter(day.city == City.city_name, day.country == City.country)
+            .filter(City.city_name == day.city, City.country == day.country)
             .one_or_none()
         )
         weather_forecast = WeatherForecast(
-            weather_forecast=forecast,
+            date=day.date,
+            weather_conditions=day.weather_conditions,
+            temperature=day.temperature,
         )
 
         if city_entry is None:

@@ -48,6 +48,7 @@ class WeatherForecast(Table):
     __tablename__ = "weather_forecast"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    date: Mapped[str] = mapped_column(String(250), nullable=False)
     weather_conditions: Mapped[str] = mapped_column(String(250), nullable=False)
     temperature: Mapped[float] = mapped_column(nullable=False)
     city_id: Mapped[int] = mapped_column(ForeignKey("cities.id", ondelete="CASCADE"))
