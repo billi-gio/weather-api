@@ -1,9 +1,7 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel
-
-from weather_api.weather_requests.weatherclient import DayForecast
 
 
 class WeatherRequestSchema(BaseModel):
@@ -14,4 +12,7 @@ class WeatherRequestSchema(BaseModel):
 
 
 class WeatherForecast(BaseModel):
-    forecast: Optional[List]
+    weather_conditions: str
+    temperature: float
+    sunrise: Optional[datetime] = None
+    sunset: Optional[datetime] = None

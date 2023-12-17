@@ -1,23 +1,31 @@
 import datetime
 
+from mock import patch
 from sqlalchemy import StaticPool, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from weather_api.weather_requests.routes import get_db, get_forecast_client, get_weather_now_client
+from weather_api.weather_requests.routes import get_db
 from weather_api.weather_requests.weather_requests_database import Table
 from weather_api.weather_requests.weatherclient import DayForecast, LongTermForecastClient
 
 
-def test_returns_correct_response(test_client):
-    DATABASE_URL = "sqlite:///:memory:"
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={
-            "check_same_thread": False,
-        },
-        poolclass=StaticPool,
-    )
+class DummyDayForecast:
+    date: datetime = "2023-12-04 12:56:54+01:00"
+    temperature: str = 0.0
+    weather_conditions: str = "dummy"
+    city: str = "dummy"
+    country: str = "dummy"
+    sunrise: datetime = "2023-12-04 12:56:54+01:00"
+    sunset: datetime = "2023-12-04 12:56:54+01:00"
+
+
+@patch("weather_api.weather_requests.weatherclient.OneDayForecastClient.get_weather_forecast")
+def test_weather_now_returns_correct_response(
+    dummy_onedayforecast_client, test_client, test_engine
+):
+    engine = test_engine
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
     Table.metadata.create_all(bind=engine)
 
     def override_get_db():
@@ -25,27 +33,11 @@ def test_returns_correct_response(test_client):
         yield database
         database.close()
 
+    city_name = "who cares"
+
+    dummy_onedayforecast_client.return_value = DummyDayForecast
+
     test_client.app.dependency_overrides[get_db] = override_get_db
-
-    class DummyDayForecast:
-        date: datetime = "2023-12-04 12:56:54+01:00"
-        temperature: str = 0.0
-        weather_conditions: str = "dummy"
-        city: str = "dummy"
-        country: str = "dummy"
-        sunrise: datetime = "2023-12-04 12:56:54+01:00"
-        sunset: datetime = "2023-12-04 12:56:54+01:00"
-
-    class DummyClient:
-        def get_weather_forecast(city_name, verbosity):
-            return DummyDayForecast
-
-    def override_get_client():
-        return DummyClient
-
-    test_client.app.dependency_overrides[get_weather_now_client] = override_get_client
-
-    city_name = "camposampiero"
 
     response = test_client.get(f"/weather-now/{city_name}")
 
@@ -60,66 +52,39 @@ def test_returns_correct_response(test_client):
     Table.metadata.drop_all(bind=engine)
 
 
-# def test_returns_correct_response(test_client):
-#     DATABASE_URL = "sqlite:///:memory:"
-#     engine = create_engine(
-#         DATABASE_URL,
-#         connect_args={
-#             "check_same_thread": False,
-#         },
-#         poolclass=StaticPool,
-#     )
-#     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-#     Table.metadata.create_all(bind=engine)
+@patch("weather_api.weather_requests.weatherclient.LongTermForecastClient.get_weather_forecast")
+def test_weatherforecast_returns_correct_response(
+    dummy_longforecast_client, test_client, test_engine
+):
+    engine = test_engine
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-#     def override_get_db():
-#         database = TestingSessionLocal()
-#         yield database
-#         database.close()
+    Table.metadata.create_all(bind=engine)
 
-#     test_client.app.dependency_overrides[get_db] = override_get_db
+    def override_get_db():
+        database = TestingSessionLocal()
+        yield database
+        database.close()
 
-#     class DummyDayForecast:
-#         date: datetime = "2023-12-04 12:56:54+01:00"
-#         temperature: str = 0.0
-#         weather_conditions: str = "dummy"
-#         city: str = "dummy"
-#         country: str = "dummy"
-#         sunrise: datetime = "2023-12-04 12:56:54+01:00"
-#         sunset: datetime = "2023-12-04 12:56:54+01:00"
+    city_name = "who cares"
 
-#     class DummyClient:
-#         def get_weather_forecast(city_name, verbosity, days):
-#             day_forecast_instance = DummyDayForecast
-#             day_forecast_instance.date = "2023-12-04 12:56:54+01:00"
-#             day_forecast_instance.temperature = 0.0
-#             day_forecast_instance.weather_conditions = "dummy"
-#             day_forecast_instance.city = "dummy"
-#             day_forecast_instance.country = "dummy"
-#             day_forecast_instance.sunrise= "2023-12-04 12:56:54+01:00"
-#             day_forecast_instance.sunset = "2023-12-04 12:56:54+01:00"
-#             forecast_ls = []
-#             forecast_ls.append(day_forecast_instance)
-#             return forecast_ls
+    ls = []
+    ls.append(DummyDayForecast)
+    dummy_longforecast_client.return_value = ls
 
-#     def override_get_client():
-#         return DummyClient
+    test_client.app.dependency_overrides[get_db] = override_get_db
 
-#     test_client.app.dependency_overrides[get_forecast_client] = override_get_client
+    response = test_client.get(f"/weather-forecast/{city_name}")
 
-#     city_name = "camposampiero"
+    assert response.status_code == 200
+    assert response.json() == {
+        "weather_conditions": "dummy",
+        "temperature": 0.0,
+        "sunrise": "2023-12-04T12:56:54+01:00",
+        "sunset": "2023-12-04T12:56:54+01:00",
+    }
 
-#     response = test_client.get(f"/weather-forecast/{city_name}")
-
-#     assert response.status_code == 200
-#     # assert response.json() == {
-#     #     "weather_conditions": "dummy",
-#     #     "temperature": 0.0,
-#     #     "sunrise": "2023-12-04T12:56:54+01:00",
-#     #     "sunset": "2023-12-04T12:56:54+01:00",
-#     # }
-
-#     Table.metadata.drop_all(bind=engine)
+    Table.metadata.drop_all(bind=engine)
 
 
 def test_14_day_forecast():

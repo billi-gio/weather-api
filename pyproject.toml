@@ -16,6 +16,7 @@ loguru = "*"
 pycountry = "^23.12.11"
 sqlalchemy-stubs = "^0.4"
 types-requests = "^2.31.0.10"
+mock = "^5.1.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
