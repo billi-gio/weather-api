@@ -1,18 +1,15 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import StaticPool, create_engine
+from sqlalchemy.orm import sessionmaker
 import pytest
 
 from weather_api.app import create_app
+from weather_api.weather_requests.routes import get_db
+from weather_api.weather_requests.weather_requests_database import Table
 
 
-@pytest.fixture(scope="session")
-def test_client(application_config) -> TestClient:
-    app = create_app()
-    return TestClient(app)
-
-
-@pytest.fixture(scope="session")
-def test_engine():
+@pytest.fixture(scope="module")
+def test_client() -> TestClient:
     DATABASE_URL = "sqlite:///:memory:"
     engine = create_engine(
         DATABASE_URL,
@@ -21,4 +18,19 @@ def test_engine():
         },
         poolclass=StaticPool,
     )
-    return engine
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    app = create_app()
+
+    Table.metadata.create_all(bind=engine)
+
+    def override_get_db():
+        try:
+            db = TestingSessionLocal()
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    return TestClient(app)

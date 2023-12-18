@@ -1,7 +1,6 @@
 import datetime
 
 from mock import patch
-from sqlalchemy import StaticPool, create_engine
 from sqlalchemy.orm import sessionmaker
 
 from weather_api.weather_requests.routes import get_db
@@ -20,24 +19,10 @@ class DummyDayForecast:
 
 
 @patch("weather_api.weather_requests.weatherclient.OneDayForecastClient.get_weather_forecast")
-def test_weather_now_returns_correct_response(
-    dummy_onedayforecast_client, test_client, test_engine
-):
-    engine = test_engine
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-    Table.metadata.create_all(bind=engine)
-
-    def override_get_db():
-        database = TestingSessionLocal()
-        yield database
-        database.close()
-
+def test_weather_now_returns_correct_response(dummy_onedayforecast_client, test_client):
     city_name = "who cares"
 
     dummy_onedayforecast_client.return_value = DummyDayForecast
-
-    test_client.app.dependency_overrides[get_db] = override_get_db
 
     response = test_client.get(f"/weather-now/{city_name}")
 
@@ -49,30 +34,14 @@ def test_weather_now_returns_correct_response(
         "sunset": "2023-12-04T12:56:54+01:00",
     }
 
-    Table.metadata.drop_all(bind=engine)
-
 
 @patch("weather_api.weather_requests.weatherclient.LongTermForecastClient.get_weather_forecast")
-def test_weatherforecast_returns_correct_response(
-    dummy_longforecast_client, test_client, test_engine
-):
-    engine = test_engine
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-    Table.metadata.create_all(bind=engine)
-
-    def override_get_db():
-        database = TestingSessionLocal()
-        yield database
-        database.close()
-
+def test_weatherforecast_returns_correct_response(dummy_longforecast_client, test_client):
     city_name = "who cares"
 
     ls = []
     ls.append(DummyDayForecast)
     dummy_longforecast_client.return_value = ls
-
-    test_client.app.dependency_overrides[get_db] = override_get_db
 
     response = test_client.get(f"/weather-forecast/{city_name}")
 
@@ -83,8 +52,6 @@ def test_weatherforecast_returns_correct_response(
         "sunrise": "2023-12-04T12:56:54+01:00",
         "sunset": "2023-12-04T12:56:54+01:00",
     }
-
-    Table.metadata.drop_all(bind=engine)
 
 
 def test_14_day_forecast():

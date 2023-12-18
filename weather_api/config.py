@@ -11,7 +11,7 @@ class ApplicationConfig:
     service: str = "weather-api"
     host: str = "0.0.0.0"
     port: str = "8080"
-    api_key = str(os.getenv("API_KEY"))
+    api_key: str = str(os.getenv("API_KEY_OPENWEATHER"))
 
 
 @lru_cache
