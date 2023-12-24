@@ -1,7 +1,6 @@
 """Client to get weather today for given city"""
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from enum import Enum
 from typing import Any
 import os
 import textwrap
@@ -9,11 +8,6 @@ import textwrap
 from requests import HTTPError
 import pycountry
 import requests
-
-
-class ForecastVerbosity(str, Enum):
-    BRIEF = "brief"
-    DETAILED = "detailed"
 
 
 @dataclass
@@ -31,9 +25,8 @@ class DayForecast:
     weather_conditions: str
     city: str
     country: str
-    wind_speed: float | None = None
-    sunrise: datetime | None = None
-    sunset: datetime | None = None
+    wind_speed: float
+    humidity: float
 
     def __str__(self) -> str:
         return textwrap.dedent(
@@ -41,11 +34,10 @@ class DayForecast:
         Date: {self.date.date().isoformat()}
         Temperature: {self.temperature} Celsius
         Weather conditions: {self.weather_conditions}
+        Wind Speed: {self.wind_speed}
+        Humidity; {self.humidity}
         City: {self.city}
         Country: {self.country}
-        {(f"Wind Speed: {self.wind_speed}") if self.wind_speed else ''}
-        {(f"Sunrise: {self.sunrise.strftime('%H:%M:%S%z')}") if self.sunrise else ''}
-        {(f"Sunset: {self.sunset.strftime('%H:%M:%S%z')}") if self.sunset else ''}
         """
         )
 
@@ -56,7 +48,6 @@ class DayForecast:
         city_timezone: int,
         city_name: str,
         country_name: str,
-        verbosity: str | None = "brief",
     ) -> "DayForecast":
         """First changes times from UTC to local, then populates DayForecast"""
         weather_condition_list: list = weather_dictionary["weather"]
@@ -64,12 +55,6 @@ class DayForecast:
         utc_date = weather_dictionary["dt"]
         local_date = datetime.utcfromtimestamp(utc_date)
         local_date = local_date.replace(tzinfo=timezone(timedelta(seconds=city_timezone)))
-        utc_sunrise = weather_dictionary["sys"]["sunrise"]
-        local_sunrise = datetime.utcfromtimestamp(utc_sunrise)
-        local_sunrise = local_sunrise.replace(tzinfo=timezone(timedelta(seconds=city_timezone)))
-        utc_sunset = weather_dictionary["sys"]["sunset"]
-        local_sunset = datetime.utcfromtimestamp(utc_sunset)
-        local_sunset = local_sunset.replace(tzinfo=timezone(timedelta(seconds=city_timezone)))
 
         weather_forecast = cls(
             date=local_date,
@@ -77,11 +62,9 @@ class DayForecast:
             weather_conditions=weather_condition_list[0]["description"],
             city=city_name,
             country=country_name,
+            wind_speed=weather_dictionary["wind"]["speed"],
+            humidity=weather_dictionary["main"]["humidity"],
         )
-        if verbosity == ForecastVerbosity.DETAILED:
-            weather_forecast.wind_speed = weather_dictionary["wind"]["speed"]
-            weather_forecast.sunrise = local_sunrise
-            weather_forecast.sunset = local_sunset
 
         return weather_forecast
 
@@ -120,12 +103,14 @@ class OneDayForecastClient(WeatherMapClient, BuildURLMixin):
     endpoint = "weather"
 
     def get_weather_forecast(
-        self, city: str | None = None, verbosity: str | None = "brief"
+        self,
+        city: str | None = None,
+        country_code: str | None = None,
     ) -> DayForecast:
         """First builds the url and call the endpoints, which returns a dict
         then sends the dict to dataclass to have today's weather"""
         weather_url = self.build_url(self.endpoint)
-        parameters = {"q": city, "units": self.units, "appid": self.api_key}
+        parameters = {"q": f"{city},{country_code}", "units": self.units, "appid": self.api_key}
         try:
             weather_dictionary = self.call_endpoint(weather_url, parameters)
         except HTTPError:
@@ -135,7 +120,7 @@ class OneDayForecastClient(WeatherMapClient, BuildURLMixin):
         city_name = weather_dictionary["name"]
         country = pycountry.countries.get(alpha_2=weather_dictionary["sys"]["country"]).name
         weather_forecast = DayForecast.from_weather_dict(
-            weather_dictionary, city_timezone, city_name, country, verbosity
+            weather_dictionary, city_timezone, city_name, country
         )
         return weather_forecast
 
@@ -157,21 +142,18 @@ class LongTermForecastClient(WeatherMapClient, BuildURLMixin):
         weather_conditions_list = day_forecast["weather"]
         weather_conditions = weather_conditions_list[0]["description"]
         one_day_forecast["weather"] = [{"description": weather_conditions}]
-        one_day_forecast["sys"] = {
-            "sunset": day_forecast["sunset"],
-            "sunrise": day_forecast["sunrise"],
-        }
         one_day_forecast["wind"] = {"speed": day_forecast["speed"]}
+        one_day_forecast["main"] = {"humidity": day_forecast["humidity"]}
 
         return one_day_forecast
 
     def get_weather_forecast(
-        self, city: str | None = None, verbosity: str | None = None, days: int | None = None
+        self, city: str, country_code: str | None = None, days: int | None = None
     ) -> list[DayForecast]:
         """First builds the url and call the endpoints, which returns a dict
         then sends the dict to dataclass to have 14 days weather"""
         weather_url = self.build_url(self.endpoint)
-        parameters = {"q": city, "units": self.units, "appid": self.api_key}
+        parameters = {"q": f"{city},{country_code}", "units": self.units, "appid": self.api_key}
         try:
             weather_dictionary = self.call_endpoint(weather_url, parameters)
         except HTTPError:
@@ -187,7 +169,6 @@ class LongTermForecastClient(WeatherMapClient, BuildURLMixin):
                 city_timezone,
                 city_name,
                 country,
-                verbosity,
             )
             weather_forecast.append(one_day_forecast)
             if index == days:
@@ -196,20 +177,19 @@ class LongTermForecastClient(WeatherMapClient, BuildURLMixin):
         return weather_forecast
 
 
-def main(
-    city: str | None = None,
-    verbosity: str | None = None,
-    days: int | None = None,
-    forecast_bool: bool = True,
-) -> DayForecast | list[DayForecast]:
-    config = ForecastClientConfig(str(os.getenv("API_KEY")))
+def main() -> DayForecast | list[DayForecast]:
+    city: str = "camposampiero"
+    country_code: str = "it"
+    days: int = 10
+    forecast_bool: bool = True
+    config = ForecastClientConfig(str(os.getenv("API_KEY_OPENWEATHER")))
 
     if forecast_bool:
         client: Any = LongTermForecastClient(config)
-        forecast = client.get_weather_forecast(city, verbosity, days)
+        forecast = client.get_weather_forecast(city, country_code, days)
     else:
         client = OneDayForecastClient(config)
-        forecast = client.get_weather_forecast(city, verbosity)
+        forecast = client.get_weather_forecast(city, country_code)
 
     return forecast
 

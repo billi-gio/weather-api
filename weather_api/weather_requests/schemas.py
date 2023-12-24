@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -7,12 +6,13 @@ from pydantic import BaseModel
 class WeatherRequestSchema(BaseModel):
     weather_conditions: str
     temperature: float
-    sunrise: Optional[datetime] = None
-    sunset: Optional[datetime] = None
+    wind_speed: float
+    humidity: float
 
 
 class WeatherForecast(BaseModel):
+    date: str
     weather_conditions: str
     temperature: float
-    sunrise: Optional[datetime] = None
-    sunset: Optional[datetime] = None
+    wind_speed: float
+    humidity: float

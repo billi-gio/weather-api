@@ -9,11 +9,12 @@ from weather_api.weather_requests.weather_requests_database import (
 )
 
 if TYPE_CHECKING:
-    from weather_api.weather_requests.weatherclient import DayForecast
+    from weather_api.weather_requests.weather_clients.weatherclient import DayForecast
 
 
 def add_weather_request_entry_to_db(request: "DayForecast", session: Session) -> None:
-    """Take the api result for the weather at the moment and a db session and add the entry to the database."""
+    """Take the api result for the weather at the moment and a db session
+    and add the entry to the database."""
     city_entry = (
         session.query(City)
         .filter(City.city_name == request.city, City.country == request.country)
@@ -23,6 +24,8 @@ def add_weather_request_entry_to_db(request: "DayForecast", session: Session) ->
         date=request.date,
         weather_conditions=request.weather_conditions,
         temperature=request.temperature,
+        wind_speed=request.wind_speed,
+        humidity=request.humidity,
     )
 
     if city_entry is None:
@@ -41,24 +44,28 @@ def add_weather_request_entry_to_db(request: "DayForecast", session: Session) ->
 
 def add_forecast_entry(forecast: list["DayForecast"], session: Session) -> None:
     """Take the 14 days forecast api result and a db session and add the entry to the database."""
-    for day in forecast:
-        city_entry = (
-            session.query(City)
-            .filter(City.city_name == day.city, City.country == day.country)
-            .one_or_none()
+
+    city_entry = (
+        session.query(City)
+        .filter(City.city_name == forecast[0].city, City.country == forecast[0].country)
+        .one_or_none()
+    )
+
+    if city_entry is None:
+        city_entry = City(
+            country=forecast[0].country,
+            city_name=forecast[0].city,
         )
+        session.add(city_entry)
+
+    for day in forecast:
         weather_forecast = WeatherForecast(
             date=day.date,
             weather_conditions=day.weather_conditions,
             temperature=day.temperature,
+            wind_speed=day.wind_speed,
+            humidity=day.humidity,
         )
-
-        if city_entry is None:
-            city_entry = City(
-                country=day.country,
-                city_name=day.city,
-            )
-            session.add(city_entry)
 
         weather_forecast.city = city_entry  # type: ignore
 
