@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 
-from weather_api.weather_requests.weather_requests_database import Table
+from weather_api.weather_requests.weather_models import Table
 
 engine = create_engine("sqlite:///weatherclient.db", echo=True)
 

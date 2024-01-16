@@ -1,74 +1,81 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from requests import HTTPError
-from sqlalchemy.orm import Session
-import pycountry
+from fastapi import APIRouter, HTTPException, status
 
-from weather_api.config import get_db
-from weather_api.weather_requests.add_new_request_to_db import (
-    add_forecast_entry,
-    add_weather_request_entry_to_db,
+from weather_api.weather_requests import service_handler
+from weather_api.weather_requests.clients.base_day_forecast import (
+    BadApiException,
+    BadCityException,
 )
-from weather_api.weather_requests.schemas import WeatherForecast, WeatherRequestSchema
-from weather_api.weather_requests.weather_clients.clients import get_client
+from weather_api.weather_requests.clients.storage_clients import DBStorageClient
+from weather_api.weather_requests.clients.weather_clients import ClientProvider, get_weather_client
+from weather_api.weather_requests.schemas import WeatherResponseSchema
 
 weather_router = APIRouter()
 
 
 @weather_router.get(
-    "/weather-now/{city_name}",
-    response_model=WeatherRequestSchema,
+    "/weather-now/{country_code}/{city_name}",
+    response_model=list[WeatherResponseSchema],
     status_code=status.HTTP_200_OK,
     tags=["weather_requests"],
 )
 async def weathernow(
     city_name: str,
-    country: str | None = None,
-    db: Session = Depends(get_db),
-) -> WeatherRequestSchema:
-    client = get_client("now")
-    if country:
-        country = pycountry.countries.get(name=country).alpha_2
+    country_code: str,
+) -> list[WeatherResponseSchema]:
+    """Expect a city name in the url and 2 letters country code as a url parameter.
+    returns the weather results from selected weather client."""
+    client = get_weather_client(ClientProvider.OPENWEATHER)
     try:
-        request = client.get_weather_forecast(city_name, country)  # type: ignore
-    except HTTPError:
-        raise HTTPException(status_code=404, detail="Check city name or api key")
+        request = service_handler.weather_endpoint_handler(client, city_name, country_code)
+    except AttributeError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"{country_code} is not valid. Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.",
+        )
+    except BadCityException as e:
+        raise HTTPException(status_code=404, detail=f"{e}")
+    except BadApiException:
+        raise HTTPException(status_code=500, detail="Internal error.")
 
-    add_weather_request_entry_to_db(request, db)  # type: ignore
+    if not request:
+        raise IndexError("No Forecast available.")
 
-    return WeatherRequestSchema(**request.__dict__)
+    storage_client = DBStorageClient
+    service_handler.storage_handler(storage_client, request)
+
+    return request
 
 
 @weather_router.get(
-    "/weather-forecast/{city_name}",
-    response_model=list[WeatherForecast],
+    "/weather-forecast/{country_code}/{city_name}",
+    response_model=list[WeatherResponseSchema],
     status_code=status.HTTP_200_OK,
     tags=["weather_requests"],
 )
 async def weather_forecast(
     city_name: str,
-    country: str | None = None,
+    country_code: str,
     days: int = 10,
-    db: Session = Depends(get_db),
-) -> list[WeatherForecast]:
-    client = get_client("forecast")
-    if country:
-        country = pycountry.countries.get(name=country).alpha_2
+) -> list[WeatherResponseSchema]:
+    """Expect a city name in the url, 2 letters country code and days of forecast as a url parameter.
+    returns weather forecast in a list from selected weather client."""
+    client = get_weather_client(ClientProvider.WEATHERAPI)
     try:
-        weather = client.get_weather_forecast(city_name, days, country)  # type: ignore
-    except HTTPError:
-        raise HTTPException(status_code=404, detail="Check city name or api key")
-
-    add_forecast_entry(weather, db)  # type: ignore
-
-    days_forecast_list = []
-    for entry in weather:  # type: ignore
-        days_forecast_list.append(
-            WeatherForecast(
-                date=str(entry.date.date()),
-                weather_conditions=entry.weather_conditions,
-                temperature=entry.temperature,
-                wind_speed=entry.wind_speed,
-                humidity=entry.humidity,
-            )
+        request = service_handler.weather_endpoint_handler(client, city_name, country_code, days)
+    except AttributeError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"{country_code} is not valid. Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.",
         )
-    return days_forecast_list
+    except BadCityException:
+        raise HTTPException(status_code=404, detail="City does not exist.")
+    except BadApiException:
+        raise HTTPException(status_code=500, detail="Internal error.")
+
+    if not request:
+        raise IndexError("No Forecast available.")
+
+    storage_client = DBStorageClient
+    service_handler.storage_handler(storage_client, request)
+
+    return request

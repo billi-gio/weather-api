@@ -44,18 +44,29 @@ class WeatherRequest(Table):
     )
 
 
-class WeatherForecast(Table):
-    """Table to store weather forecast requests."""
+class WeatherUser(Table):
+    """Table to store weather forecast notes from users."""
 
-    __tablename__ = "weather_forecast"
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_name: Mapped[str] = mapped_column(String(250), nullable=False, unique=True)
+    timezone: Mapped[str] = mapped_column(String(250), nullable=False)
+    city_id: Mapped[int] = mapped_column(ForeignKey("cities.id", ondelete="CASCADE"))
+    city: ClassVar[RelationshipProperty[Never]] = relationship(
+        "City", backref=backref("weather_note")
+    )
+
+
+class WeatherNote(Table):
+    """Table to store weather forecast notes from users."""
+
+    __tablename__ = "weather_notes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     date: Mapped[str] = mapped_column(String(250), nullable=False)
-    weather_conditions: Mapped[str] = mapped_column(String(250), nullable=False)
-    temperature: Mapped[float] = mapped_column(nullable=False)
-    wind_speed: Mapped[float] = mapped_column(nullable=False)
-    humidity: Mapped[float] = mapped_column(nullable=False)
-    city_id: Mapped[int] = mapped_column(ForeignKey("cities.id", ondelete="CASCADE"))
-    city: ClassVar[RelationshipProperty[Never]] = relationship(
-        "City", backref=backref("weather_forecast")
+    note: Mapped[str] = mapped_column(String(250), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user: ClassVar[RelationshipProperty[Never]] = relationship(
+        "WeatherUser", backref=backref("weather_note")
     )

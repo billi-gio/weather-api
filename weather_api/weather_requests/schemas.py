@@ -1,18 +1,13 @@
-from typing import Optional
+from datetime import datetime
 
 from pydantic import BaseModel
 
 
-class WeatherRequestSchema(BaseModel):
+class WeatherResponseSchema(BaseModel):
+    date: datetime
     weather_conditions: str
     temperature: float
     wind_speed: float
     humidity: float
-
-
-class WeatherForecast(BaseModel):
-    date: str
-    weather_conditions: str
-    temperature: float
-    wind_speed: float
-    humidity: float
+    city_name: str
+    country: str
