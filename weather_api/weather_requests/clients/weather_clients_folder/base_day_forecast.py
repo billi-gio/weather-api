@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
@@ -21,24 +22,28 @@ class ForecastClientConfig:
     units: Optional[str] = "metric"
 
 
-class WeatherMapClient:
-    """Client to call endpoint"""
-
+class BaseWeatherClient(ABC):
     def __init__(self, config: ForecastClientConfig) -> None:
         self.api_key = config.api_key
         self.units = config.units
 
-    @staticmethod
-    def call_endpoint(endpoint: str, parameters: dict) -> Response:
-        response = requests.get(endpoint, params=parameters, verify=False)
-        return response
+    @abstractmethod
+    def build_url(self, base_url: str, endpoint: str) -> str:
+        """Build url to send to call_endpoint."""
+
+    @abstractmethod
+    def call_endpoint(self, endpoint: str, parameters: dict) -> Response:
+        """Call the endpoint and return the reponse."""
 
 
-class BuildURLMixin:
-    def build_url(self, base_url, endpoint: str) -> str:
-        """Call to url builder, with given parameters"""
+class CallEndpointMixin(BaseWeatherClient):
+    def build_url(self, base_url: str, endpoint: str) -> str:
         url = f"{base_url}/{endpoint}"
         return url
+
+    def call_endpoint(self, endpoint: str, parameters: dict) -> Response:
+        response = requests.get(endpoint, params=parameters, verify=False)
+        return response
 
 
 @dataclass

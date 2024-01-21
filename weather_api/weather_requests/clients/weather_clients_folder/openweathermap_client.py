@@ -5,17 +5,16 @@ import os
 
 import pycountry
 
-from weather_api.weather_requests.clients.base_day_forecast import (
+from weather_api.weather_requests.clients.weather_clients_folder.base_day_forecast import (
     BadApiException,
     BadCityException,
-    BuildURLMixin,
+    CallEndpointMixin,
     DayForecast,
     ForecastClientConfig,
-    WeatherMapClient,
 )
 
 
-class WeatherOpenWeatherForecast(DayForecast):
+class OpenWeatherMapForecast(DayForecast):
     @classmethod
     def from_weather_dict(
         cls,
@@ -44,8 +43,8 @@ class WeatherOpenWeatherForecast(DayForecast):
         return weather_forecast
 
 
-class OpenWeatherClient(WeatherMapClient, BuildURLMixin):
-    """Client to get today's weather in given city."""
+class OpenWeatherMapClient(CallEndpointMixin):
+    """Client to get current weather, current or forecast."""
 
     base_url = "https://api.openweathermap.org/data/2.5/"
 
@@ -56,7 +55,10 @@ class OpenWeatherClient(WeatherMapClient, BuildURLMixin):
         if response.status_code == 404:
             raise BadCityException(f"Location {parameters['q']} is not found.")
         elif response.status_code == 401:
-            raise BadApiException
+            responsedict = response.json()
+            raise BadApiException(
+                f"Failure core: {responsedict['cod']}. {responsedict['message']}"
+            )
 
         weather_dictionary = response.json()
         return weather_dictionary
@@ -77,7 +79,7 @@ class OpenWeatherClient(WeatherMapClient, BuildURLMixin):
         city_timezone = weather_dictionary["timezone"]
         city_name = weather_dictionary["name"]
         country = pycountry.countries.get(alpha_2=weather_dictionary["sys"]["country"]).name
-        day = WeatherOpenWeatherForecast.from_weather_dict(
+        day = OpenWeatherMapForecast.from_weather_dict(
             weather_dictionary, city_timezone, city_name, country
         )
         weather_forecast = []
@@ -118,7 +120,7 @@ class OpenWeatherClient(WeatherMapClient, BuildURLMixin):
 
         weather_forecast = []
         for index, day_forecast in enumerate(weather_dictionary["list"]):
-            one_day_forecast = WeatherOpenWeatherForecast.from_weather_dict(
+            one_day_forecast = OpenWeatherMapForecast.from_weather_dict(
                 self.transform_forecast_dict(day_forecast),
                 city_timezone,
                 city_name,
@@ -135,10 +137,10 @@ def main() -> DayForecast | list[DayForecast]:
     city: str = "camposampiero"
     country_code: str = "it"
     days: int = 10
-    forecast_bool: bool = True
+    forecast_bool: bool = False
     config = ForecastClientConfig(str(os.getenv("API_KEY_OPENWEATHER")))
 
-    client = OpenWeatherClient(config)
+    client = OpenWeatherMapClient(config)
 
     if forecast_bool:
         forecast = client.get_long_weather_forecast(city, country_code, days)

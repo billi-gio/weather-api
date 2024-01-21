@@ -1,13 +1,41 @@
 import pycountry
 
-from weather_api.weather_requests.clients import openweathermap_client, weatherapi_client
-from weather_api.weather_requests.clients.storage_clients import DBStorageClient
+from weather_api.weather_requests.clients.storage_clients_folder.storage_clients import (
+    DBStorageClient,
+)
+from weather_api.weather_requests.clients.weather_clients_folder import (
+    openweathermap_client,
+    weatherapi_client,
+)
 from weather_api.weather_requests.schemas import WeatherResponseSchema
 from weather_api.weather_requests.weather_models import City, WeatherRequest
 
 
+def get_request_helper(
+    weather_client: openweathermap_client.OpenWeatherMapClient
+    | weatherapi_client.WeatherAPIClient,
+    city_name: str,
+    country_code: str,
+    storage_client: DBStorageClient,
+    days: int | None = None,
+) -> list[WeatherResponseSchema]:
+    """Helper for endpoints to get the request and check if empty.
+    Also send request to storage handler."""
+    if days:
+        request = weather_endpoint_handler(weather_client, city_name, country_code, days)
+    else:
+        request = weather_endpoint_handler(weather_client, city_name, country_code)
+
+    if not request:
+        raise IndexError
+
+    storage_handler(storage_client, request)
+
+    return request
+
+
 def weather_endpoint_handler(
-    client: openweathermap_client.OpenWeatherClient | weatherapi_client.WeatherAPIClient,
+    client: openweathermap_client.OpenWeatherMapClient | weatherapi_client.WeatherAPIClient,
     city_name: str,
     country_code: str,
     days: int | None = None,
@@ -39,12 +67,12 @@ def weather_endpoint_handler(
     return days_forecast_list
 
 
-def storage_handler(client: type[DBStorageClient], data: list[WeatherResponseSchema]) -> None:
+def storage_handler(client: DBStorageClient, data: list[WeatherResponseSchema]) -> None:
     """From data list, create a db storage client, checks for existing city entries in db,
     finally send a list to the client to save in db."""
     data_to_add_to_db = []
 
-    city_entry = client().read(
+    city_entry = client.read(
         model=City, filter={"city_name": data[0].city_name, "country": data[0].country}
     )
 
@@ -54,9 +82,8 @@ def storage_handler(client: type[DBStorageClient], data: list[WeatherResponseSch
             city_name=data[0].city_name,
         )
         data_to_add_to_db.append(city_entry)
-        city = city_entry  # type: ignore
     else:
-        city = city_entry[0]
+        city_entry = city_entry[0]
 
     for dayforecast in data:
         weather = WeatherRequest(
@@ -66,8 +93,8 @@ def storage_handler(client: type[DBStorageClient], data: list[WeatherResponseSch
             wind_speed=dayforecast.wind_speed,
             humidity=dayforecast.humidity,
         )
-        weather.city = city  # type: ignore
+        weather.city = city_entry  # type: ignore
 
         data_to_add_to_db.append(weather)
 
-    client().save(data_to_add_to_db)
+    client.save(data_to_add_to_db)

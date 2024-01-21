@@ -1,12 +1,19 @@
-from fastapi import APIRouter, HTTPException, status
+"""Endpoints for current and forecast weather."""
 
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from weather_api.config import ApplicationConfig, load_application_config
 from weather_api.weather_requests import service_handler
-from weather_api.weather_requests.clients.base_day_forecast import (
+from weather_api.weather_requests.clients.storage_clients_folder.storage_factory import (
+    get_storage_client,
+)
+from weather_api.weather_requests.clients.weather_clients_folder.base_day_forecast import (
     BadApiException,
     BadCityException,
 )
-from weather_api.weather_requests.clients.storage_clients import DBStorageClient
-from weather_api.weather_requests.clients.weather_clients import ClientProvider, get_weather_client
+from weather_api.weather_requests.clients.weather_clients_folder.weather_factory import (
+    get_weather_client,
+)
 from weather_api.weather_requests.schemas import WeatherResponseSchema
 
 weather_router = APIRouter()
@@ -21,27 +28,43 @@ weather_router = APIRouter()
 async def weathernow(
     city_name: str,
     country_code: str,
+    config: ApplicationConfig = Depends(load_application_config),
 ) -> list[WeatherResponseSchema]:
     """Expect a city name in the url and 2 letters country code as a url parameter.
     returns the weather results from selected weather client."""
-    client = get_weather_client(ClientProvider.OPENWEATHER)
     try:
-        request = service_handler.weather_endpoint_handler(client, city_name, country_code)
+        client = get_weather_client(config.weather_now_provider)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"""{config.weather_now_provider} is not a valid provider.""",
+        )
+    try:
+        storage_client = get_storage_client(config.storage_type)
+    except:
+        raise HTTPException(
+            status_code=400,
+            detail=f"""{config.storage_type} is not a valid storage type.""",
+        )
+
+    try:
+        request = service_handler.get_request_helper(
+            client, city_name, country_code, storage_client
+        )
     except AttributeError:
         raise HTTPException(
             status_code=404,
-            detail=f"{country_code} is not valid. Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.",
+            detail=f"""{country_code} is not valid.
+            Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.""",
         )
     except BadCityException as e:
         raise HTTPException(status_code=404, detail=f"{e}")
     except BadApiException:
         raise HTTPException(status_code=500, detail="Internal error.")
-
-    if not request:
-        raise IndexError("No Forecast available.")
-
-    storage_client = DBStorageClient
-    service_handler.storage_handler(storage_client, request)
+    except IndexError:
+        raise HTTPException(
+            status_code=404, detail=f"No Forecast available for {city_name, country_code}."
+        )
 
     return request
 
@@ -56,26 +79,42 @@ async def weather_forecast(
     city_name: str,
     country_code: str,
     days: int = 10,
+    config: ApplicationConfig = Depends(load_application_config),
 ) -> list[WeatherResponseSchema]:
-    """Expect a city name in the url, 2 letters country code and days of forecast as a url parameter.
+    """Expect a city name in the url,
+    2 letters country code and days of forecast as a url parameter.
     returns weather forecast in a list from selected weather client."""
-    client = get_weather_client(ClientProvider.WEATHERAPI)
     try:
-        request = service_handler.weather_endpoint_handler(client, city_name, country_code, days)
+        client = get_weather_client(config.weather_forecast_provider)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"""{config.weather_forecast_provider} is not a valid provider.""",
+        )
+    try:
+        storage_client = get_storage_client(config.storage_type)
+    except:
+        raise HTTPException(
+            status_code=400,
+            detail=f"""{config.storage_type} is not a valid storage type.""",
+        )
+    try:
+        request = service_handler.get_request_helper(
+            client, city_name, country_code, storage_client, days
+        )
     except AttributeError:
         raise HTTPException(
             status_code=404,
-            detail=f"{country_code} is not valid. Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.",
+            detail=f"""{country_code} is not valid.
+            Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.""",
         )
-    except BadCityException:
-        raise HTTPException(status_code=404, detail="City does not exist.")
+    except BadCityException as e:
+        raise HTTPException(status_code=404, detail=f"{e}")
     except BadApiException:
         raise HTTPException(status_code=500, detail="Internal error.")
-
-    if not request:
-        raise IndexError("No Forecast available.")
-
-    storage_client = DBStorageClient
-    service_handler.storage_handler(storage_client, request)
+    except IndexError:
+        raise HTTPException(
+            status_code=404, detail=f"No Forecast available for {city_name, country_code}."
+        )
 
     return request

@@ -1,4 +1,4 @@
-"""Factory for clients for data storage."""
+"""Clients for data storage."""
 
 from abc import ABC, abstractmethod
 

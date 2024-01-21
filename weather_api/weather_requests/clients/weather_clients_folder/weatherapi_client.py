@@ -7,13 +7,12 @@ import os
 
 import pytz
 
-from weather_api.weather_requests.clients.base_day_forecast import (
+from weather_api.weather_requests.clients.weather_clients_folder.base_day_forecast import (
     BadApiException,
     BadCityException,
-    BuildURLMixin,
+    CallEndpointMixin,
     DayForecast,
     ForecastClientConfig,
-    WeatherMapClient,
 )
 
 
@@ -44,8 +43,8 @@ class WeatherApiDayForecast(DayForecast):
         return weather_forecast
 
 
-class WeatherAPIClient(WeatherMapClient, BuildURLMixin):
-    """Client to get today's weather in given city."""
+class WeatherAPIClient(CallEndpointMixin):
+    """Client to get current weather, current or forecast."""
 
     base_url = "http://api.weatherapi.com/v1"
 
@@ -56,7 +55,10 @@ class WeatherAPIClient(WeatherMapClient, BuildURLMixin):
         if response.status_code == 400:
             raise BadCityException(f"{parameters['q']} does not match any location.")
         elif response.status_code == 403:
-            raise BadApiException()
+            raise BadApiException(
+                f"""Failure core: {response.status_code}. {response.json()['error']['message']} 
+                                  Please check https://www.weatherapi.com/api-explorer.aspx#forecast for more info"""
+            )
 
         weather_dictionary = response.json()
 
