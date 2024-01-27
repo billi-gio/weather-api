@@ -25,6 +25,7 @@ class OpenWeatherMapForecast(DayForecast):
         country_name: str,
     ) -> "DayForecast":
         """Populates DayForecast for the openweathermap_client."""
+
         weather_condition_list: list = weather_dictionary["weather"]
 
         utc_date = weather_dictionary["dt"]
@@ -83,8 +84,7 @@ class OpenWeatherMapClient(BaseWeatherClient, CallEndpointMixin):
         day = OpenWeatherMapForecast.from_weather_dict(
             weather_dictionary, city_timezone, city_name, country
         )
-        weather_forecast = []
-        weather_forecast.append(day)
+        weather_forecast = [day]
         return weather_forecast
 
     @staticmethod
@@ -146,7 +146,7 @@ def main() -> DayForecast | list[DayForecast]:
     if forecast_bool:
         forecast = client.get_long_weather_forecast(city, country_code, days)
     else:
-        forecast = client.get_current_weather(city, country_code)  # type: ignore
+        forecast = client.get_current_weather(city, country_code)
 
     return forecast
 

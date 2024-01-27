@@ -19,12 +19,16 @@ def get_weather_client(
 ) -> openweathermap_client.OpenWeatherMapClient | weatherapi_client.WeatherAPIClient:
     """Return client depending on api provider"""
     if client_provider == ClientProvider.OPENWEATHER:
-        configuration = openweathermap_client.ForecastClientConfig(config.ApplicationConfig.openweather_api_key)  # type: ignore
-        return openweathermap_client.OpenWeatherMapClient(configuration)  # type: ignore
+        configuration = openweathermap_client.ForecastClientConfig(
+            config.ApplicationConfig.openweather_api_key
+        )
+        return openweathermap_client.OpenWeatherMapClient(configuration)
 
     elif client_provider == ClientProvider.WEATHERAPI:
-        configuration = weatherapi_client.ForecastClientConfig(config.ApplicationConfig.weather_api_com_key)  # type: ignore
-        return weatherapi_client.WeatherAPIClient(configuration)  # type: ignore
+        configuration = weatherapi_client.ForecastClientConfig(
+            config.ApplicationConfig.weather_api_com_key
+        )
+        return weatherapi_client.WeatherAPIClient(configuration)
 
     else:
         raise ValueError(f"{client_provider} is not a valid provider.")

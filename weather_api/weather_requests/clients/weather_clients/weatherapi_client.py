@@ -50,7 +50,7 @@ class WeatherAPIClient(BaseWeatherClient, CallEndpointMixin):
     base_url = "http://api.weatherapi.com/v1"
 
     def get_weather_dictionary(self, weather_url: str, parameters: dict) -> dict:
-        """Helper to call the endpoint and extract values for both methods, now and long forecast."""
+        """Helper to call the endpoint and extract values for both now and long forecast."""
 
         response = self.call_endpoint(weather_url, parameters)
         if response.status_code == 400:
@@ -58,7 +58,7 @@ class WeatherAPIClient(BaseWeatherClient, CallEndpointMixin):
         elif response.status_code == 403:
             raise BadApiException(
                 f"""Failure core: {response.status_code}. {response.json()['error']['message']} 
-                                  Please check https://www.weatherapi.com/api-explorer.aspx#forecast for more info"""
+                Please check https://www.weatherapi.com/api-explorer.aspx#forecast for more info"""
             )
 
         weather_dictionary = response.json()

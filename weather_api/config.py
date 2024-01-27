@@ -3,7 +3,7 @@ from typing import Generator
 import os
 
 from dotenv import find_dotenv, load_dotenv
-from sqlalchemy import Engine  # type: ignore
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 from weather_api.weather_requests.clients.storage_clients.storage_factory import StorageType

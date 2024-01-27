@@ -47,9 +47,9 @@ def weather_endpoint_handler(
         )
 
     if days:
-        request = client.get_long_weather_forecast(city_name, country_code, days)  # type: ignore
+        request = client.get_long_weather_forecast(city_name, country_code, days)
     else:
-        request = client.get_current_weather(city_name, country_code)  # type: ignore
+        request = client.get_current_weather(city_name, country_code)
 
     days_forecast_list = []
     for entry in request:  # type: ignore

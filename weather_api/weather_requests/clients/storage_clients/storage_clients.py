@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from sqlalchemy import Engine  # type: ignore
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from weather_api.weather_requests.weather_models import City, WeatherRequest
