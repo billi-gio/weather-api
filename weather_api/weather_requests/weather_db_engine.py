@@ -1,4 +1,4 @@
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine # type: ignore
 
 from weather_api.weather_requests.weather_models import Table
 
