@@ -2,16 +2,17 @@ from unittest.mock import patch
 
 from pytest import raises
 
-from weather_api.weather_requests.clients.weather_clients_folder import openweathermap_client
+from weather_api.weather_requests.clients.weather_clients import openweathermap_client
 from weather_api.weather_requests.schemas import WeatherResponseSchema
 from weather_api.weather_requests.service_handler import (
+    InexistentCountry,
     get_request_helper,
     weather_endpoint_handler,
 )
 
 
 @patch(
-    "weather_api.weather_requests.clients.weather_clients_folder.openweathermap_client.OpenWeatherMapClient.get_current_weather"
+    "weather_api.weather_requests.clients.weather_clients.openweathermap_client.OpenWeatherMapClient.get_current_weather"
 )
 def test_weather_service_handler(dummy_onedayforecast_client, dummy_day_forecast):
     city_name = "who cares"
@@ -38,33 +39,15 @@ def test_weather_service_handler(dummy_onedayforecast_client, dummy_day_forecast
     ] == response
 
 
-def test_service_handler_nonexistant_country():
+def test_service_handler_with_nonexistant_country():
     city_name = "who cares"
     country_code = "Nope"
     client = "not_important"
 
-    expected_result = AttributeError
+    expected_result = InexistentCountry
 
-    with raises(AttributeError) as err:
+    with raises(InexistentCountry) as err:
         weather_endpoint_handler(client=client, city_name=city_name, country_code=country_code)
-    assert err.type == expected_result
-
-
-@patch("weather_api.weather_requests.service_handler.weather_endpoint_handler")
-@patch("weather_api.weather_requests.service_handler.storage_handler")
-def test_get_request_helper_returns_empty_list(dummy_db_handler, dummy_weather_handler):
-    city_name = "who cares"
-    country_code = "IT"
-    weather_client = "not important"
-    storage_client = "also not important"
-
-    dummy_db_handler.return_value = None
-    dummy_weather_handler.return_value = []
-
-    expected_result = IndexError
-
-    with raises(IndexError) as err:
-        get_request_helper(weather_client, city_name, country_code, storage_client)
     assert err.type == expected_result
 
 

@@ -1,7 +1,7 @@
 from pytest import mark
 import responses
 
-from weather_api.weather_requests.clients.weather_clients_folder.base_day_forecast import (
+from weather_api.weather_requests.clients.weather_clients.base_weather_client import (
     CallEndpointMixin,
     ForecastClientConfig,
 )

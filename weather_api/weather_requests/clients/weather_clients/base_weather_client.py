@@ -23,20 +23,26 @@ class ForecastClientConfig:
 
 
 class BaseWeatherClient(ABC):
+    @abstractmethod
+    def get_current_weather(
+        self,
+        city: str,
+        country_code: str,
+    ) -> list["DayForecast"]:
+        "Get current weather in given city."
+
+    @abstractmethod
+    def get_long_weather_forecast(
+        self, city: str, country_code: str, days: int = 10
+    ) -> list["DayForecast"]:
+        "Get weather forecast for n days, depending on days variable."
+
+
+class CallEndpointMixin:
     def __init__(self, config: ForecastClientConfig) -> None:
         self.api_key = config.api_key
         self.units = config.units
 
-    @abstractmethod
-    def build_url(self, base_url: str, endpoint: str) -> str:
-        """Build url to send to call_endpoint."""
-
-    @abstractmethod
-    def call_endpoint(self, endpoint: str, parameters: dict) -> Response:
-        """Call the endpoint and return the reponse."""
-
-
-class CallEndpointMixin(BaseWeatherClient):
     def build_url(self, base_url: str, endpoint: str) -> str:
         url = f"{base_url}/{endpoint}"
         return url

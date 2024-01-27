@@ -33,21 +33,23 @@ def test_client() -> TestClient:
     return TestClient(app)
 
 
-DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={
-        "check_same_thread": False,
-    },
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+def override_get_engine():
+    DATABASE_URL = "sqlite:///:memory:"
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={
+            "check_same_thread": False,
+        },
+        poolclass=StaticPool,
+    )
 
-Table.metadata.create_all(bind=engine)
+    Table.metadata.create_all(bind=engine)
+    return engine
 
 
 @pytest.fixture(scope="module")
 def override_get_db():
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=override_get_engine)
     try:
         db = TestingSessionLocal()
         yield db

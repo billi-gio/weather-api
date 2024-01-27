@@ -4,16 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from weather_api.config import ApplicationConfig, load_application_config
 from weather_api.weather_requests import service_handler
-from weather_api.weather_requests.clients.storage_clients_folder.storage_factory import (
-    get_storage_client,
-)
-from weather_api.weather_requests.clients.weather_clients_folder.base_day_forecast import (
+from weather_api.weather_requests.clients.storage_clients.storage_factory import get_storage_client
+from weather_api.weather_requests.clients.weather_clients.base_weather_client import (
     BadApiException,
     BadCityException,
 )
-from weather_api.weather_requests.clients.weather_clients_folder.weather_factory import (
-    get_weather_client,
-)
+from weather_api.weather_requests.clients.weather_clients.weather_factory import get_weather_client
 from weather_api.weather_requests.schemas import WeatherResponseSchema
 
 weather_router = APIRouter()
@@ -34,39 +30,25 @@ async def weathernow(
     returns the weather results from selected weather client."""
     try:
         client = get_weather_client(config.weather_now_provider)
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail=f"""{config.weather_now_provider} is not a valid provider.""",
+            detail=str(e),
         )
     try:
         storage_client = get_storage_client(config.storage_type)
-    except:
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail=f"""{config.storage_type} is not a valid storage type.""",
+            detail=str(e),
         )
 
     try:
-        request = service_handler.get_request_helper(
-            client, city_name, country_code, storage_client
-        )
-    except AttributeError:
-        raise HTTPException(
-            status_code=404,
-            detail=f"""{country_code} is not valid.
-            Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.""",
-        )
-    except BadCityException as e:
-        raise HTTPException(status_code=404, detail=f"{e}")
-    except BadApiException:
-        raise HTTPException(status_code=500, detail="Internal error.")
-    except IndexError:
-        raise HTTPException(
-            status_code=404, detail=f"No Forecast available for {city_name, country_code}."
-        )
-
-    return request
+        return service_handler.get_request_helper(client, city_name, country_code, storage_client)
+    except (AttributeError, BadCityException, IndexError, service_handler.InexistentCountry) as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except BadApiException as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
 
 @weather_router.get(
@@ -86,35 +68,23 @@ async def weather_forecast(
     returns weather forecast in a list from selected weather client."""
     try:
         client = get_weather_client(config.weather_forecast_provider)
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail=f"""{config.weather_forecast_provider} is not a valid provider.""",
+            detail=str(e),
         )
     try:
         storage_client = get_storage_client(config.storage_type)
-    except:
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail=f"""{config.storage_type} is not a valid storage type.""",
+            detail=str(e),
         )
     try:
-        request = service_handler.get_request_helper(
+        return service_handler.get_request_helper(
             client, city_name, country_code, storage_client, days
         )
-    except AttributeError:
-        raise HTTPException(
-            status_code=404,
-            detail=f"""{country_code} is not valid.
-            Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.""",
-        )
-    except BadCityException as e:
-        raise HTTPException(status_code=404, detail=f"{e}")
-    except BadApiException:
-        raise HTTPException(status_code=500, detail="Internal error.")
-    except IndexError:
-        raise HTTPException(
-            status_code=404, detail=f"No Forecast available for {city_name, country_code}."
-        )
-
-    return request
+    except (AttributeError, BadCityException, IndexError, service_handler.InexistentCountry) as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except BadApiException as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")

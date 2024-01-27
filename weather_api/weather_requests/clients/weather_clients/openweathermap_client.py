@@ -5,9 +5,10 @@ import os
 
 import pycountry
 
-from weather_api.weather_requests.clients.weather_clients_folder.base_day_forecast import (
+from weather_api.weather_requests.clients.weather_clients.base_weather_client import (
     BadApiException,
     BadCityException,
+    BaseWeatherClient,
     CallEndpointMixin,
     DayForecast,
     ForecastClientConfig,
@@ -43,7 +44,7 @@ class OpenWeatherMapForecast(DayForecast):
         return weather_forecast
 
 
-class OpenWeatherMapClient(CallEndpointMixin):
+class OpenWeatherMapClient(BaseWeatherClient, CallEndpointMixin):
     """Client to get current weather, current or forecast."""
 
     base_url = "https://api.openweathermap.org/data/2.5/"
@@ -104,7 +105,7 @@ class OpenWeatherMapClient(CallEndpointMixin):
         return one_day_forecast
 
     def get_long_weather_forecast(
-        self, city: str, country_code: str, days: int | None = None
+        self, city: str, country_code: str, days: int = 10
     ) -> list[DayForecast]:
         """First builds the url and call the endpoints, which returns a dict
         then sends the dict to dataclass to have 14 days weather"""

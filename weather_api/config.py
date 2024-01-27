@@ -1,24 +1,15 @@
-from enum import Enum
 from functools import lru_cache
 from typing import Generator
 import os
 
 from dotenv import find_dotenv, load_dotenv
+from sqlalchemy import Engine
 from sqlalchemy.orm import sessionmaker
 
-from weather_api.weather_requests.weather_db_engine import engine
+from weather_api.weather_requests.clients.storage_clients.storage_factory import StorageType
+from weather_api.weather_requests.clients.weather_clients.weather_factory import ClientProvider
 
 load_dotenv(find_dotenv())
-
-
-class ClientProvider(str, Enum):
-    OPENWEATHER = "openweathermap"
-    WEATHERAPI = "weatherapi"
-
-
-class StorageType(str, Enum):
-    DATABASE = "database"
-    CSV = "csv"
 
 
 class ApplicationConfig:
@@ -30,6 +21,7 @@ class ApplicationConfig:
     weather_now_provider = ClientProvider.OPENWEATHER
     weather_forecast_provider = ClientProvider.WEATHERAPI
     storage_type = StorageType.DATABASE
+    database_url: str | None = "sqlite:///weatherclient.db"
 
 
 @lru_cache
@@ -40,7 +32,7 @@ def load_application_config() -> ApplicationConfig:
 config = load_application_config()
 
 
-def get_db() -> Generator:
+def get_db(engine: Engine) -> Generator:
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
     try:

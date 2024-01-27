@@ -1,14 +1,16 @@
 import pycountry
 
-from weather_api.weather_requests.clients.storage_clients_folder.storage_clients import (
-    DBStorageClient,
-)
-from weather_api.weather_requests.clients.weather_clients_folder import (
+from weather_api.weather_requests.clients.storage_clients.storage_clients import DBStorageClient
+from weather_api.weather_requests.clients.weather_clients import (
     openweathermap_client,
     weatherapi_client,
 )
 from weather_api.weather_requests.schemas import WeatherResponseSchema
 from weather_api.weather_requests.weather_models import City, WeatherRequest
+
+
+class InexistentCountry(Exception):
+    pass
 
 
 def get_request_helper(
@@ -21,13 +23,7 @@ def get_request_helper(
 ) -> list[WeatherResponseSchema]:
     """Helper for endpoints to get the request and check if empty.
     Also send request to storage handler."""
-    if days:
-        request = weather_endpoint_handler(weather_client, city_name, country_code, days)
-    else:
-        request = weather_endpoint_handler(weather_client, city_name, country_code)
-
-    if not request:
-        raise IndexError
+    request: list = weather_endpoint_handler(weather_client, city_name, country_code, days)
 
     storage_handler(storage_client, request)
 
@@ -40,10 +36,15 @@ def weather_endpoint_handler(
     country_code: str,
     days: int | None = None,
 ) -> list[WeatherResponseSchema]:
-    """Expect a city name in the url and 2 letters country code as a url parameter.
-    returns the weather results from selected weather client."""
+    """Checks country code correctness and then call the weather client methods for now and forecast."""
 
-    pycountry.countries.get(alpha_2=country_code).name
+    try:
+        pycountry.countries.get(alpha_2=country_code).name
+    except AttributeError:
+        raise InexistentCountry(
+            f"""{country_code} is not valid.
+            Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2."""
+        )
 
     if days:
         request = client.get_long_weather_forecast(city_name, country_code, days)  # type: ignore

@@ -7,9 +7,10 @@ import os
 
 import pytz
 
-from weather_api.weather_requests.clients.weather_clients_folder.base_day_forecast import (
+from weather_api.weather_requests.clients.weather_clients.base_weather_client import (
     BadApiException,
     BadCityException,
+    BaseWeatherClient,
     CallEndpointMixin,
     DayForecast,
     ForecastClientConfig,
@@ -25,7 +26,7 @@ class WeatherApiDayForecast(DayForecast):
         city_timezone: int,
         city_name: str,
         country_name: str,
-    ) -> "WeatherApiDayForecast":
+    ) -> "DayForecast":
         """First changes times from UTC to local, then populates DayForecast"""
 
         utc_date = weather_dictionary["location"]["localtime_epoch"]
@@ -43,7 +44,7 @@ class WeatherApiDayForecast(DayForecast):
         return weather_forecast
 
 
-class WeatherAPIClient(CallEndpointMixin):
+class WeatherAPIClient(BaseWeatherClient, CallEndpointMixin):
     """Client to get current weather, current or forecast."""
 
     base_url = "http://api.weatherapi.com/v1"
@@ -76,7 +77,7 @@ class WeatherAPIClient(CallEndpointMixin):
         self,
         city: str,
         country_code: str,
-    ) -> list[WeatherApiDayForecast]:
+    ) -> list[DayForecast]:
         """First builds the url and call the endpoints, which returns a dict
         then sends the dict to dataclass to have today's weather"""
         endpoint = "current.json"
@@ -113,7 +114,7 @@ class WeatherAPIClient(CallEndpointMixin):
         city: str,
         country_code: str,
         days: int = 10,
-    ) -> list[WeatherApiDayForecast]:
+    ) -> list[DayForecast]:
         """First builds the url and call the endpoints, which returns a dict
         then sends the dict to dataclass to have today's weather"""
         endpoint = "forecast.json"

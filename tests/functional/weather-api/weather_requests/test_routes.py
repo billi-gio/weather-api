@@ -1,8 +1,5 @@
 from unittest.mock import patch
 
-from fastapi import HTTPException
-from pytest import raises
-
 from weather_api.weather_requests.schemas import WeatherResponseSchema
 
 
