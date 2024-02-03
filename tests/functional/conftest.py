@@ -2,7 +2,6 @@ import datetime
 
 from fastapi.testclient import TestClient
 from sqlalchemy import StaticPool, create_engine
-from sqlalchemy.orm import sessionmaker
 import pytest
 
 from weather_api.app import create_app
@@ -33,6 +32,7 @@ def test_client() -> TestClient:
     return TestClient(app)
 
 
+@pytest.fixture(scope="module")
 def override_get_engine():
     DATABASE_URL = "sqlite:///:memory:"
     engine = create_engine(
@@ -45,13 +45,3 @@ def override_get_engine():
 
     Table.metadata.create_all(bind=engine)
     return engine
-
-
-@pytest.fixture(scope="module")
-def override_get_db():
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=override_get_engine)
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()

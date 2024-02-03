@@ -9,7 +9,7 @@ from weather_api.weather_requests.schemas import WeatherResponseSchema
 from weather_api.weather_requests.weather_models import City, WeatherRequest
 
 
-class InexistentCountry(Exception):
+class NonexistentCountry(Exception):
     pass
 
 
@@ -41,7 +41,7 @@ def weather_endpoint_handler(
     try:
         pycountry.countries.get(alpha_2=country_code).name
     except AttributeError:
-        raise InexistentCountry(
+        raise NonexistentCountry(
             f"""{country_code} is not valid.
             Please refer to https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2."""
         )

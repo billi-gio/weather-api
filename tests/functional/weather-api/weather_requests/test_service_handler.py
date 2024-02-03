@@ -5,7 +5,7 @@ from pytest import raises
 from weather_api.weather_requests.clients.weather_clients import openweathermap_client
 from weather_api.weather_requests.schemas import WeatherResponseSchema
 from weather_api.weather_requests.service_handler import (
-    InexistentCountry,
+    NonexistentCountry,
     get_request_helper,
     weather_endpoint_handler,
 )
@@ -44,9 +44,9 @@ def test_service_handler_with_nonexistant_country():
     country_code = "Nope"
     client = "not_important"
 
-    expected_result = InexistentCountry
+    expected_result = NonexistentCountry
 
-    with raises(InexistentCountry) as err:
+    with raises(NonexistentCountry) as err:
         weather_endpoint_handler(client=client, city_name=city_name, country_code=country_code)
     assert err.type == expected_result
 

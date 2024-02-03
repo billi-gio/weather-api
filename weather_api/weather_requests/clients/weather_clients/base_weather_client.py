@@ -29,13 +29,13 @@ class BaseWeatherClient(ABC):
         city: str,
         country_code: str,
     ) -> list["DayForecast"]:
-        "Get current weather in given city."
+        """Get current weather in given city."""
 
     @abstractmethod
     def get_long_weather_forecast(
         self, city: str, country_code: str, days: int = 10
     ) -> list["DayForecast"]:
-        "Get weather forecast for n days, depending on days variable."
+        """Get weather forecast for n days, depending on days variable."""
 
 
 class CallEndpointMixin:

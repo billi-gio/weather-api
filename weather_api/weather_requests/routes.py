@@ -45,7 +45,7 @@ async def weathernow(
 
     try:
         return service_handler.get_request_helper(client, city_name, country_code, storage_client)
-    except (AttributeError, BadCityException, IndexError, service_handler.InexistentCountry) as e:
+    except (AttributeError, BadCityException, IndexError, service_handler.NonexistentCountry) as e:
         raise HTTPException(status_code=404, detail=str(e))
     except BadApiException as e:
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
@@ -84,7 +84,7 @@ async def weather_forecast(
         return service_handler.get_request_helper(
             client, city_name, country_code, storage_client, days
         )
-    except (AttributeError, BadCityException, IndexError, service_handler.InexistentCountry) as e:
+    except (AttributeError, BadCityException, IndexError, service_handler.NonexistentCountry) as e:
         raise HTTPException(status_code=404, detail=str(e))
     except BadApiException as e:
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")

@@ -3,10 +3,9 @@
 from abc import ABC, abstractmethod
 
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker
 
 from weather_api.weather_requests.weather_models import City, WeatherRequest
-import weather_api.config as config
 
 
 class BaseStorageClient(ABC):
@@ -22,7 +21,8 @@ class BaseStorageClient(ABC):
 class DBStorageClient(BaseStorageClient):
     def __init__(self, engine: Engine) -> None:
         super().__init__()
-        self.session: Session = next(config.get_db(engine))
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        self.session = SessionLocal()
 
     def save(self, data: list) -> None:
         """Save list of entries in db."""
