@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, status
 
-from weather_api.config import ApplicationConfig, load_application_config
+from weather_api.config import load_config
 from weather_api.healthcheck.schemas import ServiceHealthcheck
 
 router = APIRouter()
@@ -13,9 +13,9 @@ router = APIRouter()
     tags=["healthcheck"],
 )
 async def healthcheck(
-    config: ApplicationConfig = Depends(load_application_config),
+    config=load_config(),
 ) -> dict[str, str]:
     return {
-        "service": config.service,
+        "service": config["service"],
         # "environment": config.environment,
     }

@@ -1,8 +1,10 @@
 import datetime
+import os
 
 from fastapi.testclient import TestClient
 from sqlalchemy import StaticPool, create_engine
 import pytest
+import yaml
 
 from weather_api.app import create_app
 from weather_api.weather_requests.weather_models import Table
@@ -32,7 +34,7 @@ def test_client() -> TestClient:
     return TestClient(app)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def override_get_engine():
     DATABASE_URL = "sqlite:///:memory:"
     engine = create_engine(
@@ -45,3 +47,13 @@ def override_get_engine():
 
     Table.metadata.create_all(bind=engine)
     return engine
+
+
+@pytest.fixture(scope="module")
+def override_load_config():
+    yaml_config_file = os.getenv("CONFTEST")
+    if not yaml_config_file:
+        raise TypeError("CONFTEST env variable is not set.")
+    with open(yaml_config_file) as config_file:
+        config = yaml.load(config_file, Loader=yaml.FullLoader)
+    return config

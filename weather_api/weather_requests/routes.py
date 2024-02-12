@@ -1,8 +1,8 @@
 """Endpoints for current and forecast weather."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 
-from weather_api.config import ApplicationConfig, load_application_config
+from weather_api.config import load_config
 from weather_api.weather_requests import service_handler
 from weather_api.weather_requests.clients.storage_clients.storage_factory import get_storage_client
 from weather_api.weather_requests.clients.weather_clients.base_weather_client import (
@@ -24,19 +24,19 @@ weather_router = APIRouter()
 async def weathernow(
     city_name: str,
     country_code: str,
-    config: ApplicationConfig = Depends(load_application_config),
+    config=load_config(),
 ) -> list[WeatherResponseSchema]:
     """Expect a city name in the url and 2 letters country code as a url parameter.
     returns the weather results from selected weather client."""
     try:
-        client = get_weather_client(config.weather_now_provider)
+        client = get_weather_client(config["weather_now_provider"])
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=str(e),
         )
     try:
-        storage_client = get_storage_client(config.storage_type)
+        storage_client = get_storage_client(config["database_storage_type"])
     except ValueError as e:
         raise HTTPException(
             status_code=400,
@@ -61,20 +61,20 @@ async def weather_forecast(
     city_name: str,
     country_code: str,
     days: int = 10,
-    config: ApplicationConfig = Depends(load_application_config),
+    config=load_config(),
 ) -> list[WeatherResponseSchema]:
     """Expect a city name in the url,
     2 letters country code and days of forecast as a url parameter.
     returns weather forecast in a list from selected weather client."""
     try:
-        client = get_weather_client(config.weather_forecast_provider)
+        client = get_weather_client(config["weather_forecast_provider"])
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=str(e),
         )
     try:
-        storage_client = get_storage_client(config.storage_type)
+        storage_client = get_storage_client(config["database_storage_type"])
     except ValueError as e:
         raise HTTPException(
             status_code=400,

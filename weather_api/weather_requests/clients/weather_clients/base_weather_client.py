@@ -18,7 +18,7 @@ class BadApiException(Exception):
 
 @dataclass
 class ForecastClientConfig:
-    api_key: str
+    api_key: str | None
     units: Optional[str] = "metric"
 
 

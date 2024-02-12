@@ -1,12 +1,15 @@
 import pycountry
 
-from weather_api.weather_requests.clients.storage_clients.storage_clients import DBStorageClient
+from weather_api.weather_requests.clients.storage_clients.storage_clients import (
+    CSVStorageClient,
+    DBStorageClient,
+)
 from weather_api.weather_requests.clients.weather_clients import (
     openweathermap_client,
     weatherapi_client,
 )
 from weather_api.weather_requests.schemas import WeatherResponseSchema
-from weather_api.weather_requests.weather_models import City, WeatherRequest
+from weather_api.weather_requests.storage_handlers import csv_storage_handler, db_storage_handler
 
 
 class NonexistentCountry(Exception):
@@ -18,14 +21,17 @@ def get_request_helper(
     | weatherapi_client.WeatherAPIClient,
     city_name: str,
     country_code: str,
-    storage_client: DBStorageClient,
+    storage_client: DBStorageClient | CSVStorageClient,
     days: int | None = None,
 ) -> list[WeatherResponseSchema]:
     """Helper for endpoints to get the request and check if empty.
     Also send request to storage handler."""
     request: list = weather_endpoint_handler(weather_client, city_name, country_code, days)
 
-    storage_handler(storage_client, request)
+    if isinstance(storage_client, DBStorageClient):
+        db_storage_handler(storage_client, request)
+    else:
+        csv_storage_handler(storage_client, request)
 
     return request
 
@@ -36,8 +42,9 @@ def weather_endpoint_handler(
     country_code: str,
     days: int | None = None,
 ) -> list[WeatherResponseSchema]:
-    """Checks country code correctness and then call the weather client methods for now and forecast."""
-
+    """Checks country code correctness.
+    Then call the weather client methods for now and forecast.
+    """
     try:
         pycountry.countries.get(alpha_2=country_code).name
     except AttributeError:
@@ -52,7 +59,7 @@ def weather_endpoint_handler(
         request = client.get_current_weather(city_name, country_code)
 
     days_forecast_list = []
-    for entry in request:  # type: ignore
+    for entry in request:
         days_forecast_list.append(
             WeatherResponseSchema(
                 date=entry.date,
@@ -66,36 +73,3 @@ def weather_endpoint_handler(
         )
 
     return days_forecast_list
-
-
-def storage_handler(client: DBStorageClient, data: list[WeatherResponseSchema]) -> None:
-    """From data list, create a db storage client, checks for existing city entries in db,
-    finally send a list to the client to save in db."""
-    data_to_add_to_db = []
-
-    city_entry = client.read(
-        model=City, filter={"city_name": data[0].city_name, "country": data[0].country}
-    )
-
-    if not city_entry:
-        city_entry = City(
-            country=data[0].country,
-            city_name=data[0].city_name,
-        )
-        data_to_add_to_db.append(city_entry)
-    else:
-        city_entry = city_entry[0]
-
-    for dayforecast in data:
-        weather = WeatherRequest(
-            date=dayforecast.date,
-            weather_conditions=dayforecast.weather_conditions,
-            temperature=dayforecast.temperature,
-            wind_speed=dayforecast.wind_speed,
-            humidity=dayforecast.humidity,
-        )
-        weather.city = city_entry  # type: ignore
-
-        data_to_add_to_db.append(weather)
-
-    client.save(data_to_add_to_db)

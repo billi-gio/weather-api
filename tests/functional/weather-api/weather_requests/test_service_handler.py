@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from pytest import raises
 
+from weather_api.weather_requests.clients.storage_clients.storage_clients import DBStorageClient
 from weather_api.weather_requests.clients.weather_clients import openweathermap_client
 from weather_api.weather_requests.schemas import WeatherResponseSchema
 from weather_api.weather_requests.service_handler import (
@@ -52,12 +53,11 @@ def test_service_handler_with_nonexistant_country():
 
 
 @patch("weather_api.weather_requests.service_handler.weather_endpoint_handler")
-@patch("weather_api.weather_requests.service_handler.storage_handler")
-def test_get_request_helper_return(dummy_db_handler, dummy_weather_handler, dummy_day_forecast):
+def test_get_request_helper_return(dummy_weather_handler, override_get_engine, dummy_day_forecast):
     city_name = "who cares"
     country_code = "IT"
     weather_client = "not important"
-    storage_client = "also not important"
+    storage_client = DBStorageClient(override_get_engine)
 
     dummy_weather_handler.return_value = [
         WeatherResponseSchema(
@@ -71,9 +71,8 @@ def test_get_request_helper_return(dummy_db_handler, dummy_weather_handler, dumm
         )
     ]
 
-    dummy_db_handler.return_value = None
-
     response = get_request_helper(weather_client, city_name, country_code, storage_client)
+
     expected_result = [
         WeatherResponseSchema(
             date=dummy_day_forecast.date,

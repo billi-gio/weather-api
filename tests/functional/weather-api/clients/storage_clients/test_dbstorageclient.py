@@ -1,7 +1,5 @@
-from unittest.mock import patch
 import datetime
 
-from tests.functional.conftest import override_get_engine
 from weather_api.weather_requests.clients.storage_clients.storage_clients import DBStorageClient
 from weather_api.weather_requests.weather_models import City, WeatherRequest
 
@@ -20,7 +18,6 @@ def test_dbstorageclient_save(override_get_engine):
 def test_dbstorageclient_read(override_get_engine):
     engine = override_get_engine
     client = DBStorageClient(engine)
-    # city_to_save = City(country="WW", city_name="Very_beautiful_city")
     city = client.read(model=City, filter={"city_name": "Very_beautiful_city", "country": "WW"})
     weather_to_save = WeatherRequest(
         date=datetime.datetime(
@@ -36,10 +33,8 @@ def test_dbstorageclient_read(override_get_engine):
     entries = [weather_to_save]
     client.save(entries)
 
-    # result1 = client.read(model=City, filter={"city_name": "Very_beautiful_city", "country": "WW"})
     result2 = client.read(
         model=WeatherRequest, filter={"weather_conditions": "quite bad", "temperature": 3.5}
     )
 
-    # assert result1[0] == city_to_save
     assert result2[0] == weather_to_save

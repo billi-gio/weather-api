@@ -1,6 +1,7 @@
 """Factory for clients for api weather requests."""
 
 from enum import Enum
+import os
 
 from weather_api.weather_requests.clients.weather_clients import (
     openweathermap_client,
@@ -20,13 +21,13 @@ def get_weather_client(
     """Return client depending on api provider"""
     if client_provider == ClientProvider.OPENWEATHER:
         configuration = openweathermap_client.ForecastClientConfig(
-            config.ApplicationConfig.openweather_api_key
+            os.getenv(config.load_config()["openweather_api_key"])
         )
         return openweathermap_client.OpenWeatherMapClient(configuration)
 
     elif client_provider == ClientProvider.WEATHERAPI:
         configuration = weatherapi_client.ForecastClientConfig(
-            config.ApplicationConfig.weather_api_com_key
+            os.getenv(config.load_config()["weather_api_com_key"])
         )
         return weatherapi_client.WeatherAPIClient(configuration)
 
