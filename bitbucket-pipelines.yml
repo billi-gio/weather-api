@@ -36,4 +36,5 @@ pipelines:
             - poetry config virtualenvs.in-project true
             - poetry install --with dev
             - source .venv/bin/activate
+            - export CONFIG_FILE=config.test.yml
             - make test
