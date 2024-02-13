@@ -37,4 +37,5 @@ pipelines:
             - poetry install --with dev
             - source .venv/bin/activate
             - export CONFIG_FILE=config.test.yml
+            - export CONFIG_TEST_FILE=config.test.yml
             - make test
