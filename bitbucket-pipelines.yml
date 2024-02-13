@@ -29,6 +29,8 @@ pipelines:
           caches:
             - pip
             - venv
+          env_file:
+            - .tests.env
           script:
             - pip install poetry
             - poetry config virtualenvs.in-project true
