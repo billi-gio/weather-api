@@ -5,10 +5,9 @@ from weather_api.weather_requests.clients.storage_clients.storage_clients import
     find_if_file_exist,
 )
 from weather_api.weather_requests.schemas import WeatherResponseSchema
-import weather_api.config as config
 
 
-def test_csvstorageclient_save(dummy_day_forecast):
+def test_find_if_file_exist(dummy_day_forecast, tmp_path):
     entry_list = [
         WeatherResponseSchema(
             date=dummy_day_forecast.date,
@@ -21,35 +20,21 @@ def test_csvstorageclient_save(dummy_day_forecast):
         )
     ]
 
-    client = CSVStorageClient(config.load_config()["directory"], "temp_file.csv")
+    temp_dir = tmp_path / "temp_dir"
+    temp_dir.mkdir()
 
-    client.save(entry_list)
-
-
-def test_find_if_file_exist(dummy_day_forecast):
-    entry_list = [
-        WeatherResponseSchema(
-            date=dummy_day_forecast.date,
-            weather_conditions=dummy_day_forecast.weather_conditions,
-            temperature=dummy_day_forecast.temperature,
-            wind_speed=dummy_day_forecast.wind_speed,
-            humidity=dummy_day_forecast.humidity,
-            city_name=dummy_day_forecast.city_name,
-            country=dummy_day_forecast.country,
-        )
-    ]
-
-    client = CSVStorageClient(config.load_config()["directory"], "temp_file.csv")
-
-    client.save(entry_list)
+    temp_file = temp_dir / "temp_file.csv"
+    temp_file.write_text(
+        "date,weather_conditions,temperature,wind_speed,humidity,city_name,country"
+    )
 
     header = list(entry_list[0].model_dump().keys())
 
-    assert find_if_file_exist(config.load_config()["directory"], header).endswith(".csv")
+    assert find_if_file_exist(temp_dir, header).endswith(".csv")
 
 
 @patch("weather_api.weather_requests.clients.storage_clients.storage_clients.find_if_file_exist")
-def test_csvstorageclient_read(dummy_find_file, dummy_day_forecast):
+def test_csvstorageclient_save_and_read(dummy_find_file, dummy_day_forecast, tmp_path):
     entry_list = [
         WeatherResponseSchema(
             date=dummy_day_forecast.date,
@@ -62,7 +47,9 @@ def test_csvstorageclient_read(dummy_find_file, dummy_day_forecast):
         )
     ]
 
-    client = CSVStorageClient(config.load_config()["directory"], "temp_file.csv")
+    temp_dir = tmp_path / "temp_dir"
+    temp_dir.mkdir()
+    client = CSVStorageClient(temp_dir, "temp_file.csv")
 
     dummy_find_file.return_value = "temp_file.csv"
     client.save(entry_list)
@@ -71,6 +58,5 @@ def test_csvstorageclient_read(dummy_find_file, dummy_day_forecast):
 
     filter = entry_list[0].model_dump()
     response = client.read(filter=filter)
-    print(response)
 
     assert response[1] == entry
