@@ -22,8 +22,7 @@ def get_storage_client(storage_type: StorageType) -> DBStorageClient | CSVStorag
         return DBStorageClient(engine=configuration)
     elif storage_type == StorageType.CSV:
         return CSVStorageClient(
-            directory=config.load_config()["directory"],
-            name_to_use_if_file_doesnot_exist=config.load_config()["file_name"],
+            file_name=config.load_config()["file_name"],
         )
     else:
         raise ValueError(f"{storage_type} is not a valid storage type.")

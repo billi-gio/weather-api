@@ -1,26 +1,25 @@
 """Clients for data storage."""
 
 from abc import ABC, abstractmethod
-from os import listdir
 import csv
+import os
 
-from pydantic import BaseModel
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 from weather_api.weather_requests.weather_models import City, WeatherRequest
 
 
-def find_if_file_exist(path: str, header: list) -> str | None:
-    """Check if the csv file with correct type of headers exists."""
-    for file in listdir(path):
-        if file.endswith(".csv"):
-            with open(file, "r") as f:
-                reader = csv.DictReader(f)
-                if header == reader.fieldnames:
-                    return f.name
-    else:
-        return None
+def find_file(path: str) -> bool:
+    """Given a file path, checks if the file exists."""
+    return os.path.isfile(path)
+
+
+def find_headers(file_name: str, header: list) -> bool:
+    with open(file_name, "r") as f:
+        """Checks if given file has the given headers."""
+        reader = csv.DictReader(f)
+        return header == reader.fieldnames
 
 
 class BaseStorageClient(ABC):
@@ -32,7 +31,7 @@ class BaseStorageClient(ABC):
     def read(
         self,
         filter: dict,
-        model: type[City] | type[WeatherRequest] | None = None,
+        model: type[City] | type[WeatherRequest] | str,
     ) -> list:
         """Read object(s) from the storage"""
 
@@ -51,7 +50,7 @@ class DBStorageClient(BaseStorageClient):
     def read(
         self,
         filter: dict,
-        model: type[City] | type[WeatherRequest] | None = None,
+        model: type[City] | type[WeatherRequest] | str,
     ) -> list:
         """Read the model with selected filters."""
         if model:
@@ -73,41 +72,29 @@ class DBStorageClient(BaseStorageClient):
 
 
 class CSVStorageClient(BaseStorageClient):
-    def __init__(self, directory: str, name_to_use_if_file_doesnot_exist: str) -> None:
+    def __init__(self, file_name: str) -> None:
         super().__init__()
-        self.directory = directory
-        self.file_name = name_to_use_if_file_doesnot_exist
+        self.file_name = file_name
 
     def save(self, data: list):
         """Save list of entries in a csv file."""
-        if isinstance(data[0], BaseModel):
-            header = data[0].model_dump().keys()
+        header = data[0].model_dump().keys()
 
-        csv_file = find_if_file_exist(self.directory, list(header))
-
-        if csv_file:
-            with open(csv_file, "a") as file:
-                writer = csv.DictWriter(file, fieldnames=header)
-                for entry in data:
-                    writer.writerow(entry.model_dump())
-
-        else:
-            with open(self.file_name, "w") as file:
-                csv_writer = csv.DictWriter(file, fieldnames=header)
-                csv_writer.writeheader()
-                for entry in data:
-                    csv_writer.writerow(entry.model_dump())
+        with open(self.file_name, "a") as file:
+            writer = csv.DictWriter(file, fieldnames=header)
+            for entry in data:
+                writer.writerow(entry.model_dump())
 
     def read(
         self,
         filter,
-        model: type[City] | type[WeatherRequest] | None = None,
+        model: type[City] | type[WeatherRequest] | str,
     ) -> list:
-        csv_file = find_if_file_exist(self.directory, list(filter.keys()))
-
-        if csv_file:
+        """Checks if the file exists and if so, returns the content"""
+        csv_file = find_file(f"{model}{self.file_name}")
+        if csv_file and find_headers(self.file_name, list(filter)):
             rows = []
-            with open(csv_file, "r") as file:
+            with open(self.file_name, "r") as file:
                 reader = csv.reader(file)
                 for row in reader:
                     rows.append(row)
