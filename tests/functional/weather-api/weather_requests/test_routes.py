@@ -5,15 +5,12 @@ from weather_api.weather_requests.schemas import WeatherResponseSchema
 
 @patch("weather_api.weather_requests.weather_db_engine.get_engine")
 @patch("weather_api.weather_requests.service_handler.weather_endpoint_handler")
-@patch("weather_api.config.load_config")
 def test_weather_now_returns_correct_response(
-    config,
     dummy_weather_handler,
     engine,
     dummy_day_forecast,
     test_client,
     override_get_engine,
-    override_load_config,
 ):
     city_name = "who cares"
     country_code = "IT"
@@ -31,7 +28,6 @@ def test_weather_now_returns_correct_response(
     ]
 
     engine.return_value = override_get_engine
-    config.return_value = override_load_config
 
     response = test_client.get(f"/weather-now/{country_code}/{city_name}")
 
@@ -51,15 +47,12 @@ def test_weather_now_returns_correct_response(
 
 @patch("weather_api.weather_requests.weather_db_engine.get_engine")
 @patch("weather_api.weather_requests.service_handler.weather_endpoint_handler")
-@patch("weather_api.config.load_config")
 def test_weatherforecast_returns_correct_response(
-    config,
     dummy_weather_handler,
     engine,
     dummy_day_forecast,
     test_client,
     override_get_engine,
-    override_load_config,
 ):
     city_name = "who cares"
     country_code = "IT"
@@ -84,7 +77,6 @@ def test_weatherforecast_returns_correct_response(
             country=dummy_day_forecast.country,
         ),
     ]
-    config.return_value = override_load_config
     engine.return_value = override_get_engine
 
     response = test_client.get(f"/weather-forecast/{country_code}/{city_name}")

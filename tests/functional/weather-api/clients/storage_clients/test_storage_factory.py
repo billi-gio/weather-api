@@ -13,11 +13,9 @@ def test_storage_client_factory_raises_with_invalid_provider():
         get_storage_client("non_existant_storage_type")
 
 
-@patch("weather_api.config.load_config")
 @patch("weather_api.weather_requests.weather_db_engine.get_engine")
-def test_storage_client_factory(engine, config, override_get_engine, override_load_config):
-    config.return_value = override_load_config
+def test_storage_client_factory(engine, override_get_engine):
     engine.return_value = override_get_engine
-    response = get_storage_client("database")
+    client = get_storage_client("database")
 
-    assert isinstance(response, DBStorageClient)
+    assert isinstance(client, DBStorageClient)

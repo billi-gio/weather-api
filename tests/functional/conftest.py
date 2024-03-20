@@ -49,11 +49,11 @@ def override_get_engine():
     return engine
 
 
-@pytest.fixture(scope="module")
-def override_load_config():
-    yaml_config_file = os.getenv("CONFIG_TEST_FILE")
-    if not yaml_config_file:
-        raise TypeError("CONFIG_TEST_FILE env variable is not set.")
-    with open(yaml_config_file) as config_file:
-        config = yaml.load(config_file, Loader=yaml.FullLoader)
-    return config
+# @pytest.fixture(scope="module")
+# def override_load_config():
+#     yaml_config_file = os.getenv("CONFIG_FILE")
+#     if not yaml_config_file:
+#         raise TypeError("CONFIG_FILE env variable is not set.")
+#     with open(yaml_config_file) as config_file:
+#         config = yaml.safe_load(config_file)
+#     return config

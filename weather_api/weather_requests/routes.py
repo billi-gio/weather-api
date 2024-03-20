@@ -29,14 +29,14 @@ async def weathernow(
     """Expect a city name in the url and 2 letters country code as a url parameter.
     returns the weather results from selected weather client."""
     try:
-        client = get_weather_client(config["weather_now_provider"])
+        client = get_weather_client(config.weather_now_provider)
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=str(e),
         )
     try:
-        storage_client = get_storage_client(config["database_storage_type"])
+        storage_client = get_storage_client(config.storage_type)
     except ValueError as e:
         raise HTTPException(
             status_code=400,
@@ -67,14 +67,14 @@ async def weather_forecast(
     2 letters country code and days of forecast as a url parameter.
     returns weather forecast in a list from selected weather client."""
     try:
-        client = get_weather_client(config["weather_forecast_provider"])
+        client = get_weather_client(config.weather_forecast_provider)
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=str(e),
         )
     try:
-        storage_client = get_storage_client(config["database_storage_type"])
+        storage_client = get_storage_client(config.storage_type)
     except ValueError as e:
         raise HTTPException(
             status_code=400,

@@ -9,7 +9,7 @@ from weather_api.weather_requests.clients.weather_clients import (
     weatherapi_client,
 )
 from weather_api.weather_requests.schemas import WeatherResponseSchema
-from weather_api.weather_requests.storage_handlers import csv_storage_handler, db_storage_handler
+from weather_api.weather_requests.storage_handlers import storage_handler
 
 
 class NonexistentCountry(Exception):
@@ -28,10 +28,7 @@ def get_request_helper(
     Also send request to storage handler."""
     request: list = weather_endpoint_handler(weather_client, city_name, country_code, days)
 
-    if isinstance(storage_client, DBStorageClient):
-        db_storage_handler(storage_client, request)
-    else:
-        csv_storage_handler(storage_client, request)
+    storage_handler(storage_client, request)
 
     return request
 

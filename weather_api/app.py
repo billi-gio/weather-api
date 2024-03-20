@@ -10,9 +10,9 @@ from weather_api.routes import api_router
 
 def create_app() -> FastAPI:
     configuration = load_config()
-    app = FastAPI(title=configuration["service"], docs_url=None, redoc_url=None)
+    app = FastAPI(title=configuration.service, docs_url=None, redoc_url=None)
     app.include_router(api_router)
-    logger.info("Started %s %s", configuration["service"])
+    logger.info("Started %s %s", configuration.service)
     return app
 
 
@@ -22,7 +22,7 @@ def start_server(config) -> None:
         "gunicorn",
         "weather_api.app:create_app",
         "-b",
-        f"{config['host']}:{config['port']}",
+        f"{config.host}:{config.port}",
     ]
     os.execl(*[str(v) for v in args])
 
