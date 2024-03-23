@@ -22,7 +22,7 @@ def storage_handler(
 
     if not city_entry:
         city_entry = City(
-            id=str(uuid.uuid4()),
+            id=uuid.uuid4(),
             country=data[0].country,
             city_name=data[0].city_name,
         )
@@ -39,7 +39,7 @@ def storage_handler(
 
     for dayforecast in data:
         weather = WeatherRequest(
-            id=str(uuid.uuid4()),
+            id=uuid.uuid4(),
             date=dayforecast.date,
             weather_conditions=dayforecast.weather_conditions,
             temperature=dayforecast.temperature,

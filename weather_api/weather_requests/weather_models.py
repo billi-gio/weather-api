@@ -1,5 +1,6 @@
 """DB Tables for weather data from api requests."""
 from typing import ClassVar, Never
+from uuid import UUID
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import (  # type: ignore
@@ -22,7 +23,7 @@ class City(Table):
     __tablename__ = "cities"
     __table_args__ = (UniqueConstraint("city_name", "country"),)
 
-    id: Mapped[str] = mapped_column(primary_key=True, unique=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, unique=True)
     city_name: Mapped[str] = mapped_column(String(250), nullable=False)
     country: Mapped[str] = mapped_column(String(250), nullable=False)
 
@@ -32,13 +33,13 @@ class WeatherRequest(Table):
 
     __tablename__ = "weather_requests"
 
-    id: Mapped[str] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True)
     date: Mapped[str] = mapped_column(String(250), nullable=False)
     weather_conditions: Mapped[str] = mapped_column(String(250), nullable=False)
     temperature: Mapped[float] = mapped_column(nullable=False)
     wind_speed: Mapped[float] = mapped_column(nullable=False)
     humidity: Mapped[float] = mapped_column(nullable=False)
-    city_id: Mapped[str] = mapped_column(ForeignKey("cities.id", ondelete="CASCADE"))
+    city_id: Mapped[UUID] = mapped_column(ForeignKey("cities.id", ondelete="CASCADE"))
     city: ClassVar[RelationshipProperty[Never]] = relationship(
         "City", backref=backref("weather_conditions")
     )

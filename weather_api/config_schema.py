@@ -12,7 +12,7 @@ class ConfigValidationSchema(BaseModel):
     weather_now_provider: str
     weather_forecast_provider: str
     storage_type: str
-    database_url: str
+    database_url: str | None = None
     directory_path: str
     weather_records_file_name: str
     cities_file_name: str

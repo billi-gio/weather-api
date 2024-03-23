@@ -14,18 +14,15 @@ from weather_api.weather_requests.weather_models import City, WeatherRequest
 def retrieve_file_name(directory_path: str, model: type[City] | type[WeatherRequest]) -> str:
     """Retrieves the file name."""
     if isinstance(model, City) or isinstance(model, type(City)):
-        file_path = f"{directory_path}{load_config().cities_file_name}"
+        file_path = os.path.join(directory_path, load_config().cities_file_name)
     elif isinstance(model, WeatherRequest) or isinstance(model, type(WeatherRequest)):
-        file_path = f"{directory_path}{load_config().weather_records_file_name}"
+        file_path = os.path.join(directory_path, load_config().weather_records_file_name)
     return file_path
 
 
 def file_exists(file_path: str) -> bool:
     """Given a file path, checks if the file exists."""
-    if os.path.isfile(file_path):
-        return True
-    else:
-        return False
+    return os.path.isfile(file_path)
 
 
 def headers_exist(file_name: str, headers: list[str]) -> bool:
