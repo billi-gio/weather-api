@@ -1,4 +1,5 @@
 import datetime
+import uuid
 
 from weather_api.weather_requests.clients.storage_clients.storage_clients import DBStorageClient
 from weather_api.weather_requests.weather_models import City, WeatherRequest
@@ -7,7 +8,13 @@ from weather_api.weather_requests.weather_models import City, WeatherRequest
 def test_dbstorageclient_save(override_get_engine):
     engine = override_get_engine
     client = DBStorageClient(engine)
-    entry = [City(id="test", country="WW", city_name="Very_beautiful_city")]
+    entry = [
+        City(
+            id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+            country="WW",
+            city_name="Very_beautiful_city",
+        )
+    ]
     client.save(entry)
 
     result = client.read(model=City, filter={"city_name": "Very_beautiful_city", "country": "WW"})
@@ -20,7 +27,7 @@ def test_dbstorageclient_read(override_get_engine):
     client = DBStorageClient(engine)
     city = client.read(model=City, filter={"city_name": "Very_beautiful_city", "country": "WW"})
     weather_to_save = WeatherRequest(
-        id="test",
+        id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
         date=datetime.datetime(
             2023, 12, 4, tzinfo=datetime.timezone(datetime.timedelta(seconds=3600))
         ),
